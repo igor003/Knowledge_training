@@ -1,0 +1,24 @@
+.skill-matrix-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.skill-matrix-table th,
+.skill-matrix-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--app-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.skill-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--app-surface-muted);
+  font-size: 12px;
+  font-weight: 700;
+}

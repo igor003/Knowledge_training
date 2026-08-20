@@ -1,0 +1,28 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block admin_title %}{{ 'admin.nav.dashboard'|trans }}{% endblock %}
+{% block admin_heading %}{{ 'admin.nav.dashboard'|trans }}{% endblock %}
+{% block admin_breadcrumbs %}
+    <span aria-current="page">{{ 'admin.nav.dashboard'|trans }}</span>
+{% endblock %}
+
+{% block admin_body %}
+    <section class="dashboard-grid">
+        <article class="metric-card metric-card--neutral">
+            <span class="metric-card__label">{{ 'dashboard.system_users'|trans }}</span>
+            <strong class="metric-card__value">{{ users_count }}</strong>
+        </article>
+    </section>
+
+    <section class="module-panel">
+        <div class="module-panel__header">
+            <div>
+                <p class="app-kicker">{{ 'dashboard.admin_area'|trans }}</p>
+                <h2>{{ 'dashboard.application_administration'|trans }}</h2>
+            </div>
+        </div>
+        <div class="module-panel__body">
+            {{ 'dashboard.description'|trans }}
+        </div>
+    </section>
+{% endblock %}

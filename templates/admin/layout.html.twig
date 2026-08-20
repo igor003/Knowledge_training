@@ -1,0 +1,359 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{% block admin_title %}{{ 'admin.title'|trans }}{% endblock %} | Knowledge Training{% endblock %}
+
+{% block stylesheets %}
+    <script>
+        (function () {
+            try {
+                if (window.localStorage.getItem('knowledge_training_admin_sidebar_collapsed') === '1') {
+                    document.documentElement.classList.add('admin-sidebar-prefers-collapsed');
+                }
+            } catch (error) {
+                // Sidebar state is optional; ignore storage restrictions.
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="/build/assets/app.css">
+{% endblock %}
+
+{% block javascripts %}
+    <script type="module" src="/build/assets/app.js"></script>
+{% endblock %}
+
+{% block body %}
+    {% import 'admin/_icons.html.twig' as icons %}
+    {% set current_route = app.request.attributes.get('_route') %}
+    <div class="admin-shell" data-admin-shell>
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar__top">
+                <a class="admin-brand" href="{{ path('admin_dashboard') }}">
+                    <span class="admin-brand__text">
+                        <strong>{{ 'admin.title'|trans }}</strong>
+                        <small>Knowledge Training</small>
+                    </span>
+                </a>
+                <button
+                    class="btn admin-sidebar-toggle"
+                    type="button"
+                    data-admin-sidebar-toggle
+                    aria-label="{{ 'admin.sidebar.toggle'|trans }}"
+                    title="{{ 'admin.sidebar.toggle'|trans }}"
+                    aria-expanded="true"
+                >
+                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                        <rect class="admin-sidebar-toggle__panel" x="2.2" y="2.5" width="11.6" height="11" rx="1.6"/>
+                        <path class="admin-sidebar-toggle__divider" d="M6 2.7v10.6"/>
+                        <path class="admin-sidebar-toggle__arrow" d="m11 5.5-2.4 2.5 2.4 2.5"/>
+                    </svg>
+                </button>
+            </div>
+
+            <nav class="admin-nav" aria-label="{{ 'admin.nav.aria'|trans }}">
+                {% set users_locked = admin_entity_locked('users') %}
+                {% set roles_locked = admin_entity_locked('roles') %}
+                {% set permissions_locked = admin_entity_locked('permissions') %}
+                {% set audit_logs_locked = admin_entity_locked('audit_logs') %}
+                {% set employees_locked = admin_entity_locked('employees') %}
+                {% set employee_statuses_locked = admin_entity_locked('employee_statuses') %}
+                {% set employee_periods_locked = admin_entity_locked('employee_periods') %}
+                {% set factory_branches_locked = admin_entity_locked('factory_branches') %}
+                {% set factory_departments_locked = admin_entity_locked('factory_departments') %}
+                {% set factory_sections_locked = admin_entity_locked('factory_sections') %}
+                {% set factory_functions_locked = admin_entity_locked('factory_functions') %}
+                {% set factory_function_types_locked = admin_entity_locked('factory_function_types') %}
+                {% set work_shifts_locked = admin_entity_locked('work_shifts') %}
+                {% set training_courses_locked = admin_entity_locked('training_courses') %}
+                {% set training_course_types_locked = admin_entity_locked('training_course_types') %}
+                {% set training_course_assessment_methods_locked = admin_entity_locked('training_course_assessment_methods') %}
+                {% set training_course_plans_locked = admin_entity_locked('training_course_plans') %}
+                {% set competencies_locked = admin_entity_locked('competencies') %}
+                {% set factory_group_active = current_route starts with 'admin_factory_departments_' or current_route starts with 'admin_factory_sections_' or current_route starts with 'admin_factory_branches_' or current_route starts with 'admin_factory_functions_' or current_route starts with 'admin_factory_function_types_' or current_route starts with 'admin_work_shifts_' %}
+                {% set factory_group_default_open = current_route == 'admin_dashboard' %}
+                {% set training_group_active = current_route starts with 'admin_training_courses_' or current_route starts with 'admin_training_course_types_' or current_route starts with 'admin_training_course_assessment_methods_' or current_route starts with 'admin_training_course_plans_' %}
+                {% set access_group_active = current_route starts with 'admin_users_' or current_route starts with 'admin_roles_' or current_route starts with 'admin_permissions_' or current_route starts with 'admin_audit_logs_' %}
+                {% set employees_group_active = current_route starts with 'admin_employees_' or current_route starts with 'admin_employee_statuses_' or current_route starts with 'admin_employee_periods_' %}
+                <a
+                    href="{{ path('admin_dashboard') }}"
+                    class="{{ current_route == 'admin_dashboard' ? 'admin-nav__link--active' : '' }}"
+                    title="{{ 'admin.nav.dashboard'|trans }}"
+                    {% if current_route == 'admin_dashboard' %}aria-current="page"{% endif %}
+                >
+                    <span class="admin-nav__label">{{ icons.nav_dashboard() }}<span class="admin-nav__text">{{ 'admin.nav.dashboard'|trans }}</span></span>
+                </a>
+                <details
+                    class="admin-nav__group {{ employees_group_active ? 'admin-nav__group--active' : '' }}"
+                    data-admin-nav-group
+                    {% if employees_group_active %}open{% endif %}
+                >
+                    <summary class="admin-nav__group-summary" title="{{ 'admin.nav_group.employees'|trans }}">
+                        <span class="admin-nav__label">{{ icons.nav_users() }}<span class="admin-nav__text">{{ 'admin.nav_group.employees'|trans }}</span></span>
+                    </summary>
+                    <div class="admin-nav__group-body">
+                        <a
+                            href="{{ path('admin_employees_index') }}"
+                            class="{{ current_route starts with 'admin_employees_' ? 'admin-nav__link--active' : '' }} {{ employees_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.employees'|trans }}"
+                            {% if current_route starts with 'admin_employees_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_users() }}<span class="admin-nav__text">{{ 'admin.nav.employees'|trans }}</span></span>
+                            {% if employees_locked %}<span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>{% endif %}
+                        </a>
+                        <a
+                            href="{{ path('admin_employee_statuses_index') }}"
+                            class="{{ current_route starts with 'admin_employee_statuses_' ? 'admin-nav__link--active' : '' }} {{ employee_statuses_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.employee_statuses'|trans }}"
+                            {% if current_route starts with 'admin_employee_statuses_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_users() }}<span class="admin-nav__text">{{ 'admin.nav.employee_statuses'|trans }}</span></span>
+                            {% if employee_statuses_locked %}<span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>{% endif %}
+                        </a>
+                        <a
+                            href="{{ path('admin_employee_periods_index') }}"
+                            class="{{ current_route starts with 'admin_employee_periods_' ? 'admin-nav__link--active' : '' }} {{ employee_periods_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.employee_periods'|trans }}"
+                            {% if current_route starts with 'admin_employee_periods_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_users() }}<span class="admin-nav__text">{{ 'admin.nav.employee_periods'|trans }}</span></span>
+                            {% if employee_periods_locked %}<span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>{% endif %}
+                        </a>
+                    </div>
+                </details>
+                <details
+                    class="admin-nav__group {{ factory_group_active ? 'admin-nav__group--active' : '' }}"
+                    data-admin-nav-group
+                    data-admin-nav-default-open="{{ factory_group_default_open ? 'true' : 'false' }}"
+                    {% if factory_group_active or factory_group_default_open %}open{% endif %}
+                >
+                    <summary class="admin-nav__group-summary" title="{{ 'admin.nav_group.factory_structure'|trans }}">
+                        <span class="admin-nav__label">{{ icons.nav_departments() }}<span class="admin-nav__text">{{ 'admin.nav_group.factory_structure'|trans }}</span></span>
+                    </summary>
+                    <div class="admin-nav__group-body">
+                        <a
+                            href="{{ path('admin_factory_branches_index') }}"
+                            class="{{ current_route starts with 'admin_factory_branches_' ? 'admin-nav__link--active' : '' }} {{ factory_branches_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.factory_branches'|trans }}"
+                            {% if current_route starts with 'admin_factory_branches_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_factory_branches() }}<span class="admin-nav__text">{{ 'admin.nav.factory_branches'|trans }}</span></span>
+                            {% if factory_branches_locked %}
+                                <span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>
+                            {% endif %}
+                        </a>
+                        <a
+                            href="{{ path('admin_factory_departments_index') }}"
+                            class="{{ current_route starts with 'admin_factory_departments_' ? 'admin-nav__link--active' : '' }} {{ factory_departments_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.factory_departments'|trans }}"
+                            {% if current_route starts with 'admin_factory_departments_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_departments() }}<span class="admin-nav__text">{{ 'admin.nav.factory_departments'|trans }}</span></span>
+                            {% if factory_departments_locked %}
+                                <span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>
+                            {% endif %}
+                        </a>
+                        <a
+                            href="{{ path('admin_factory_sections_index') }}"
+                            class="{{ current_route starts with 'admin_factory_sections_' ? 'admin-nav__link--active' : '' }} {{ factory_sections_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.factory_sections'|trans }}"
+                            {% if current_route starts with 'admin_factory_sections_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_factory_sections() }}<span class="admin-nav__text">{{ 'admin.nav.factory_sections'|trans }}</span></span>
+                            {% if factory_sections_locked %}
+                                <span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>
+                            {% endif %}
+                        </a>
+                        <a
+                            href="{{ path('admin_factory_functions_index') }}"
+                            class="{{ current_route starts with 'admin_factory_functions_' ? 'admin-nav__link--active' : '' }} {{ factory_functions_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.factory_functions'|trans }}"
+                            {% if current_route starts with 'admin_factory_functions_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_positions() }}<span class="admin-nav__text">{{ 'admin.nav.factory_functions'|trans }}</span></span>
+                            {% if factory_functions_locked %}
+                                <span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>
+                            {% endif %}
+                        </a>
+                        <a
+                            href="{{ path('admin_factory_function_types_index') }}"
+                            class="{{ current_route starts with 'admin_factory_function_types_' ? 'admin-nav__link--active' : '' }} {{ factory_function_types_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.factory_function_types'|trans }}"
+                            {% if current_route starts with 'admin_factory_function_types_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_positions() }}<span class="admin-nav__text">{{ 'admin.nav.factory_function_types'|trans }}</span></span>
+                            {% if factory_function_types_locked %}<span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>{% endif %}
+                        </a>
+                        <a
+                            href="{{ path('admin_work_shifts_index') }}"
+                            class="{{ current_route starts with 'admin_work_shifts_' ? 'admin-nav__link--active' : '' }} {{ work_shifts_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.work_shifts'|trans }}"
+                            {% if current_route starts with 'admin_work_shifts_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_work_shifts() }}<span class="admin-nav__text">{{ 'admin.nav.work_shifts'|trans }}</span></span>
+                            {% if work_shifts_locked %}
+                                <span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>
+                            {% endif %}
+                        </a>
+                    </div>
+                </details>
+                <details class="admin-nav__group {{ training_group_active ? 'admin-nav__group--active' : '' }}" data-admin-nav-group {% if training_group_active %}open{% endif %}>
+                    <summary class="admin-nav__group-summary" title="{{ 'admin.nav_group.training_courses'|trans }}">
+                        <span class="admin-nav__label">{{ icons.nav_training_courses() }}<span class="admin-nav__text">{{ 'admin.nav_group.training_courses'|trans }}</span></span>
+                    </summary>
+                    <div class="admin-nav__group-body">
+                        <a
+                            href="{{ path('admin_training_courses_index') }}"
+                            class="{{ current_route starts with 'admin_training_courses_' ? 'admin-nav__link--active' : '' }} {{ training_courses_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.training_courses'|trans }}"
+                            {% if current_route starts with 'admin_training_courses_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_training_courses() }}<span class="admin-nav__text">{{ 'admin.nav.training_courses'|trans }}</span></span>
+                            {% if training_courses_locked %}
+                                <span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>
+                            {% endif %}
+                        </a>
+                        <a
+                            href="{{ path('admin_training_course_types_index') }}"
+                            class="{{ current_route starts with 'admin_training_course_types_' ? 'admin-nav__link--active' : '' }} {{ training_course_types_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.training_course_types'|trans }}"
+                            {% if current_route starts with 'admin_training_course_types_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_training_course_types() }}<span class="admin-nav__text">{{ 'admin.nav.training_course_types'|trans }}</span></span>
+                            {% if training_course_types_locked %}
+                                <span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>
+                            {% endif %}
+                        </a>
+                        <a
+                            href="{{ path('admin_training_course_assessment_methods_index') }}"
+                            class="{{ current_route starts with 'admin_training_course_assessment_methods_' ? 'admin-nav__link--active' : '' }} {{ training_course_assessment_methods_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.training_course_assessment_methods'|trans }}"
+                            {% if current_route starts with 'admin_training_course_assessment_methods_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_training_course_assessment_methods() }}<span class="admin-nav__text">{{ 'admin.nav.training_course_assessment_methods'|trans }}</span></span>
+                            {% if training_course_assessment_methods_locked %}
+                                <span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>
+                            {% endif %}
+                        </a>
+                        <a
+                            href="{{ path('admin_training_course_plans_index') }}"
+                            class="{{ current_route starts with 'admin_training_course_plans_' ? 'admin-nav__link--active' : '' }} {{ training_course_plans_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.training_course_plans'|trans }}"
+                            {% if current_route starts with 'admin_training_course_plans_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_training_course_plans() }}<span class="admin-nav__text">{{ 'admin.nav.training_course_plans'|trans }}</span></span>
+                            {% if training_course_plans_locked %}
+                                <span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>
+                            {% endif %}
+                        </a>
+                    </div>
+                </details>
+                <a
+                    href="{{ path('admin_competencies_index') }}"
+                    class="{{ current_route starts with 'admin_competencies_' ? 'admin-nav__link--active' : '' }} {{ competencies_locked ? 'admin-nav__link--locked' : '' }}"
+                    title="{{ 'admin.nav.competencies'|trans }}"
+                    {% if current_route starts with 'admin_competencies_' %}aria-current="page"{% endif %}
+                >
+                    <span class="admin-nav__label">{{ icons.nav_training_courses() }}<span class="admin-nav__text">{{ 'admin.nav.competencies'|trans }}</span></span>
+                    {% if competencies_locked %}<span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>{% endif %}
+                </a>
+                <details class="admin-nav__group {{ access_group_active ? 'admin-nav__group--active' : '' }}" data-admin-nav-group {% if access_group_active %}open{% endif %}>
+                    <summary class="admin-nav__group-summary" title="{{ 'admin.nav_group.access_control'|trans }}">
+                        <span class="admin-nav__label">{{ icons.nav_permissions() }}<span class="admin-nav__text">{{ 'admin.nav_group.access_control'|trans }}</span></span>
+                    </summary>
+                    <div class="admin-nav__group-body">
+                        <a
+                            href="{{ path('admin_users_index') }}"
+                            class="{{ current_route starts with 'admin_users_' ? 'admin-nav__link--active' : '' }} {{ users_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.users'|trans }}"
+                            {% if current_route starts with 'admin_users_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_users() }}<span class="admin-nav__text">{{ 'admin.nav.users'|trans }}</span></span>
+                            {% if users_locked %}
+                                <span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>
+                            {% endif %}
+                        </a>
+                        <a
+                            href="{{ path('admin_roles_index') }}"
+                            class="{{ current_route starts with 'admin_roles_' ? 'admin-nav__link--active' : '' }} {{ roles_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.roles'|trans }}"
+                            {% if current_route starts with 'admin_roles_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_roles() }}<span class="admin-nav__text">{{ 'admin.nav.roles'|trans }}</span></span>
+                            {% if roles_locked %}
+                                <span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>
+                            {% endif %}
+                        </a>
+                        <a
+                            href="{{ path('admin_permissions_index') }}"
+                            class="{{ current_route starts with 'admin_permissions_' ? 'admin-nav__link--active' : '' }} {{ permissions_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.permissions'|trans }}"
+                            {% if current_route starts with 'admin_permissions_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_permissions() }}<span class="admin-nav__text">{{ 'admin.nav.permissions'|trans }}</span></span>
+                            {% if permissions_locked %}
+                                <span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>
+                            {% endif %}
+                        </a>
+                        <a
+                            href="{{ path('admin_audit_logs_index') }}"
+                            class="{{ current_route starts with 'admin_audit_logs_' ? 'admin-nav__link--active' : '' }} {{ audit_logs_locked ? 'admin-nav__link--locked' : '' }}"
+                            title="{{ 'admin.nav.audit_logs'|trans }}"
+                            {% if current_route starts with 'admin_audit_logs_' %}aria-current="page"{% endif %}
+                        >
+                            <span class="admin-nav__label">{{ icons.nav_audit_logs() }}<span class="admin-nav__text">{{ 'admin.nav.audit_logs'|trans }}</span></span>
+                            {% if audit_logs_locked %}
+                                <span class="admin-nav__lock" aria-label="{{ 'common.locked'|trans }}" title="{{ 'common.locked'|trans }}"></span>
+                            {% endif %}
+                        </a>
+                    </div>
+                </details>
+            </nav>
+        </aside>
+
+        <main class="admin-main">
+            <header class="admin-topbar">
+                <div class="admin-topbar__start">
+                    <div>
+                        <nav class="admin-breadcrumbs" aria-label="{{ 'admin.breadcrumb.aria'|trans }}">
+                            {% block admin_breadcrumbs %}
+                                <span aria-current="page">{{ 'admin.nav.dashboard'|trans }}</span>
+                            {% endblock %}
+                        </nav>
+                        <h1>{% block admin_heading %}{{ 'admin.nav.dashboard'|trans }}{% endblock %}</h1>
+                    </div>
+                </div>
+
+                {% if current_user is defined and current_user %}
+                    <div class="admin-user-menu">
+                        <div class="admin-language-switcher" aria-label="{{ 'admin.language.aria'|trans }}">
+                            {% for locale in ['ru', 'ro', 'it', 'fr'] %}
+                                <a
+                                    href="{{ path('admin_language_switch', { locale: locale }) }}"
+                                    class="{{ app.request.locale == locale ? 'admin-language-switcher__item--active' : '' }}"
+                                    {% if app.request.locale == locale %}aria-current="true"{% endif %}
+                                >
+                                    {{ locale|upper }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                        <span>{{ current_user.name }} · {{ current_user.roleLabel(app.request.locale) }}</span>
+                        <form method="post" action="{{ path('admin_logout') }}">
+                            <button class="btn admin-logout-button" type="submit">
+                                {{ icons.logout() }}
+                                <span>{{ 'admin.logout'|trans }}</span>
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+            </header>
+
+            {% for message in app.flashes('error') %}
+                <div class="admin-inline-alert alert alert-danger js-auto-dismiss-alert" role="alert">{{ message|trans }}</div>
+            {% endfor %}
+            {% for message in app.flashes('success') %}
+                <div class="admin-inline-alert alert alert-success js-auto-dismiss-alert" role="alert">{{ message|trans }}</div>
+            {% endfor %}
+
+            {% block admin_body %}{% endblock %}
+        </main>
+    </div>
+{% endblock %}

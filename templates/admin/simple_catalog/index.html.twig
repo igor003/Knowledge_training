@@ -1,0 +1,411 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block admin_title %}{{ ('admin.nav.' ~ entity_code)|trans }}{% endblock %}
+{% block admin_heading %}{{ ('admin.nav.' ~ entity_code)|trans }}{% endblock %}
+{% block admin_breadcrumbs %}
+    <a href="{{ path('admin_dashboard') }}">{{ 'admin.nav.dashboard'|trans }}</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ ('admin.nav.' ~ entity_code)|trans }}</span>
+{% endblock %}
+
+{% block admin_body %}
+    {% import 'admin/_icons.html.twig' as icons %}
+    {% set has_row_actions = can_update or can_deactivate or (can_physical_delete and can_delete) %}
+    {% set has_reorder = show_reorder_controls and can_update and row_reorder_route %}
+    <section class="module-panel module-panel--table">
+        <div class="module-panel__header">
+            <div>
+                <p class="app-kicker">{{ (translation_prefix ~ '.kicker')|trans }}</p>
+                <h2>{{ (translation_prefix ~ '.title')|trans }}</h2>
+            </div>
+            {% if can_create %}
+                <button
+                    class="btn btn-primary admin-create-button"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createCatalogModal"
+                    aria-label="{{ (translation_prefix ~ '.create_record')|trans }}"
+                    title="{{ (translation_prefix ~ '.create_record')|trans }}"
+                >
+                    {{ icons.create() }}
+                    <span>{{ 'common.create'|trans }}</span>
+                </button>
+            {% endif %}
+        </div>
+
+        {% if action_error %}
+            <div class="admin-inline-alert alert alert-danger js-auto-dismiss-alert" role="alert">{{ action_error|trans }}</div>
+        {% endif %}
+
+        {% if show_relation_department_filter %}
+            <div class="admin-catalog-relation-filter">
+                <label for="catalogRelationDepartmentFilter">{{ 'catalog.factory_department'|trans }}</label>
+                <select id="catalogRelationDepartmentFilter" class="form-select" data-catalog-department-filter>
+                    <option value="">{{ 'catalog.all_departments'|trans }}</option>
+                    {% for department in factory_departments %}
+                        <option value="{{ department.id }}">{{ department.label() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% endif %}
+
+        <div class="table-responsive">
+            <table
+                class="table table-bordered admin-table{{ has_reorder ? ' admin-table--reorderable' : '' }} js-data-table mb-0"
+                {% if show_column_filters %}data-column-filters="true"{% endif %}
+                {% if has_reorder %}data-row-reorder-url="{{ path(row_reorder_route) }}" data-row-reorder-data-src="1"{% endif %}
+            >
+                <thead>
+                    <tr>
+                        {% if has_reorder %}
+                            <th class="no-sort admin-table__reorder-heading" aria-label="{{ 'factory_departments.reorder'|trans }}"></th>
+                            <th class="no-sort admin-table__sort-order">{{ 'factory_departments.reorder'|trans }}</th>
+                        {% endif %}
+                        <th>{{ catalog_name_label|trans }}</th>
+                        {% if show_process_code %}
+                            <th>{{ 'catalog.process_code'|trans }}</th>
+                        {% endif %}
+                        {% if show_address %}
+                            <th>{{ 'catalog.address'|trans }}</th>
+                        {% endif %}
+                        {% if show_factory_department %}
+                            <th>{{ 'catalog.factory_department'|trans }}</th>
+                        {% endif %}
+                        {% if show_alias %}
+                            <th>{{ 'catalog.alias'|trans }}</th>
+                        {% endif %}
+                        {% if show_function_type %}
+                            <th>{{ 'catalog.type'|trans }}</th>
+                        {% endif %}
+                        {% if show_work_time %}
+                            <th>{{ 'catalog.work_time'|trans }}</th>
+                        {% endif %}
+                        {% if show_departments %}
+                            <th>{{ 'catalog.departments'|trans }}</th>
+                        {% endif %}
+                        {% if show_positions %}
+                            <th>{{ 'catalog.positions'|trans }}</th>
+                        {% endif %}
+                        {% if show_department_count %}
+                            <th>{{ 'catalog.department_count'|trans }}</th>
+                        {% endif %}
+                        {% if show_function_count %}
+                            <th>{{ 'catalog.function_count'|trans }}</th>
+                        {% endif %}
+                        <th>{{ 'catalog.status'|trans }}</th>
+                        {% if has_row_actions %}
+                            <th class="no-sort">{{ 'common.actions'|trans }}</th>
+                        {% endif %}
+                    </tr>
+                    {% if show_column_filters %}
+                        <tr class="admin-table__column-filters">
+                            {% if has_reorder %}<th class="no-sort"></th>{% endif %}
+                            {% if has_reorder %}<th class="no-sort admin-table__sort-order"></th>{% endif %}
+                            {% set filter_column_index = has_reorder ? 2 : 0 %}
+                            <th><input class="form-control" type="search" data-column-filter="{{ filter_column_index }}" placeholder="{{ 'catalog.filter_column'|trans }}" aria-label="{{ catalog_name_label|trans }}"></th>
+                            {% set filter_column_index = filter_column_index + 1 %}
+                            {% if show_process_code %}<th><input class="form-control" type="search" data-column-filter="{{ filter_column_index }}" placeholder="{{ 'catalog.filter_column'|trans }}" aria-label="{{ 'catalog.process_code'|trans }}"></th>{% set filter_column_index = filter_column_index + 1 %}{% endif %}
+                            {% if show_address %}<th><input class="form-control" type="search" data-column-filter="{{ filter_column_index }}" placeholder="{{ 'catalog.filter_column'|trans }}" aria-label="{{ 'catalog.address'|trans }}"></th>{% set filter_column_index = filter_column_index + 1 %}{% endif %}
+                            {% if show_factory_department %}<th><input class="form-control" type="search" data-column-filter="{{ filter_column_index }}" placeholder="{{ 'catalog.filter_column'|trans }}" aria-label="{{ 'catalog.factory_department'|trans }}"></th>{% set filter_column_index = filter_column_index + 1 %}{% endif %}
+                            {% if show_alias %}<th><input class="form-control" type="search" data-column-filter="{{ filter_column_index }}" placeholder="{{ 'catalog.filter_column'|trans }}" aria-label="{{ 'catalog.alias'|trans }}"></th>{% set filter_column_index = filter_column_index + 1 %}{% endif %}
+                            {% if show_function_type %}<th><input class="form-control" type="search" data-column-filter="{{ filter_column_index }}" placeholder="{{ 'catalog.filter_column'|trans }}" aria-label="{{ 'catalog.type'|trans }}"></th>{% set filter_column_index = filter_column_index + 1 %}{% endif %}
+                            {% if show_work_time %}<th><input class="form-control" type="search" data-column-filter="{{ filter_column_index }}" placeholder="{{ 'catalog.filter_column'|trans }}" aria-label="{{ 'catalog.work_time'|trans }}"></th>{% set filter_column_index = filter_column_index + 1 %}{% endif %}
+                            {% if show_departments %}<th><input class="form-control" type="search" data-column-filter="{{ filter_column_index }}" placeholder="{{ 'catalog.filter_column'|trans }}" aria-label="{{ 'catalog.departments'|trans }}"></th>{% set filter_column_index = filter_column_index + 1 %}{% endif %}
+                            {% if show_positions %}<th><input class="form-control" type="search" data-column-filter="{{ filter_column_index }}" placeholder="{{ 'catalog.filter_column'|trans }}" aria-label="{{ 'catalog.positions'|trans }}"></th>{% set filter_column_index = filter_column_index + 1 %}{% endif %}
+                            {% if show_department_count %}<th><input class="form-control" type="search" data-column-filter="{{ filter_column_index }}" placeholder="{{ 'catalog.filter_column'|trans }}" aria-label="{{ 'catalog.department_count'|trans }}"></th>{% set filter_column_index = filter_column_index + 1 %}{% endif %}
+                            {% if show_function_count %}<th><input class="form-control" type="search" data-column-filter="{{ filter_column_index }}" placeholder="{{ 'catalog.filter_column'|trans }}" aria-label="{{ 'catalog.function_count'|trans }}"></th>{% set filter_column_index = filter_column_index + 1 %}{% endif %}
+                            <th><input class="form-control" type="search" data-column-filter="{{ filter_column_index }}" placeholder="{{ 'catalog.filter_column'|trans }}" aria-label="{{ 'catalog.status'|trans }}"></th>
+                            {% if has_row_actions %}<th class="no-sort"></th>{% endif %}
+                        </tr>
+                    {% endif %}
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                        {% set can_toggle_status = record.active ? can_deactivate : can_update %}
+                        <tr data-row-id="{{ record.id }}"{% if show_relation_department_filter %} data-filter-department-ids="{{ record.factoryDepartmentIds()|join(',') }}"{% endif %}>
+                            {% if has_reorder %}
+                                <td class="admin-table__reorder-cell">
+                                    <button
+                                        class="admin-row-reorder-handle"
+                                        type="button"
+                                        aria-label="{{ 'factory_departments.reorder'|trans }}"
+                                        title="{{ 'factory_departments.reorder'|trans }}"
+                                    >
+                                        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                            <path d="M6 3.5h.01M10 3.5h.01M6 8h.01M10 8h.01M6 12.5h.01M10 12.5h.01" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                                        </svg>
+                                    </button>
+                                </td>
+                                <td class="admin-table__sort-order">{{ record.getAttribute('sort_order')|default(loop.index * 10) }}</td>
+                            {% endif %}
+                            <td>{% if show_color %}<span class="admin-catalog-color" style="--catalog-color: {{ record.getAttribute('color') ?: '#C8E8D2' }}" aria-hidden="true"></span>{% endif %}{{ record.label() }}</td>
+                            {% if show_process_code %}
+                                <td>{{ record.getAttribute('process_code') ?: '-' }}</td>
+                            {% endif %}
+                            {% if show_address %}
+                                <td>{{ record.getAttribute('address') ?: '-' }}</td>
+                            {% endif %}
+                            {% if show_factory_department %}
+                                <td>{{ record.factoryDepartmentLabel() }}</td>
+                            {% endif %}
+                            {% if show_alias %}
+                                <td>{{ record.getAttribute('alias') ?: '-' }}</td>
+                            {% endif %}
+                            {% if show_function_type %}
+                                <td>{{ record.functionTypeLabel() }}</td>
+                            {% endif %}
+                            {% if show_work_time %}
+                                <td>{{ record.getAttribute('work_time') ?: '-' }}</td>
+                            {% endif %}
+                            {% if show_departments %}
+                                <td>
+                                    <div class="admin-catalog-tags">
+                                        {% for department_label in record.departmentLabels() %}
+                                            <span class="admin-catalog-tag">{{ department_label }}</span>
+                                        {% else %}
+                                            <span class="admin-audit-muted">-</span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                            {% endif %}
+                            {% if show_positions %}
+                                <td>
+                                    <div class="admin-catalog-tags">
+                                        {% for position_label in record.positionLabels() %}
+                                            <span class="admin-catalog-tag">{{ position_label }}</span>
+                                        {% else %}
+                                            <span class="admin-audit-muted">-</span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                            {% endif %}
+                            {% if show_department_count %}
+                                <td>{{ record.departmentIds()|length }}</td>
+                            {% endif %}
+                            {% if show_function_count %}
+                                <td>{{ record.getAttribute('functions_count')|default(0) }}</td>
+                            {% endif %}
+                            <td>{{ (record.active ? 'catalog.active' : 'catalog.inactive')|trans }}</td>
+                            {% if has_row_actions %}
+                                <td>
+                                    <div class="admin-row-actions">
+                                        {% if can_update %}
+                                            <button
+                                                class="btn admin-row-action admin-row-action--edit"
+                                                type="button"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editCatalogModal{{ record.id }}"
+                                                aria-label="{{ 'common.update'|trans }}"
+                                                title="{{ 'common.update'|trans }}"
+                                            >
+                                                {{ icons.edit() }}
+                                            </button>
+                                        {% endif %}
+
+                                        {% if can_toggle_status %}
+                                            <form
+                                                method="post"
+                                                action="{{ path(route_prefix ~ '_toggle_status', { id: record.id }) }}"
+                                                onsubmit="return confirm('{{ (record.active ? 'catalog.confirm_disable' : 'catalog.confirm_activate')|trans|e('html_attr') }}')"
+                                            >
+                                                <button
+                                                    class="btn admin-row-action {{ record.active ? 'admin-row-action--active' : 'admin-row-action--inactive' }}"
+                                                    type="submit"
+                                                    aria-label="{{ (record.active ? 'common.disable' : 'common.activate')|trans }}"
+                                                    title="{{ (record.active ? 'common.disable' : 'common.activate')|trans }}"
+                                                >
+                                                    {% if record.active %}
+                                                        {{ icons.activate() }}
+                                                    {% else %}
+                                                        {{ icons.disable() }}
+                                                    {% endif %}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+
+                                        {% if can_physical_delete and can_delete %}
+                                            <form
+                                                method="post"
+                                                action="{{ path(route_prefix ~ '_delete', { id: record.id }) }}"
+                                                onsubmit="return confirm('{{ physical_delete_confirmation|trans|e('html_attr') }}')"
+                                            >
+                                                <button
+                                                    class="btn admin-row-action admin-row-action--delete"
+                                                    type="submit"
+                                                    aria-label="{{ 'common.delete'|trans }}"
+                                                    title="{{ 'common.delete'|trans }}"
+                                                >
+                                                    {{ icons.trash() }}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {% if can_update %}
+        {% for record in records %}
+            {% set is_edit_modal_open = open_edit_record_id == record.id %}
+            {% set form_name = is_edit_modal_open ? edit_form.name : record.label() %}
+            {% set form_process_code = is_edit_modal_open ? edit_form.process_code|default('') : record.getAttribute('process_code') %}
+            {% set form_address = is_edit_modal_open ? edit_form.address|default('') : record.getAttribute('address') %}
+            {% set form_factory_department_id = is_edit_modal_open ? edit_form.factory_department_id|default('') : record.getAttribute('factory_department_id') %}
+            {% set form_color = is_edit_modal_open ? edit_form.color|default('') : record.getAttribute('color')|default('') %}
+            {% set form_alias = is_edit_modal_open ? edit_form.alias : record.getAttribute('alias') %}
+            {% set form_function_type_id = is_edit_modal_open ? edit_form.function_type_id|default('') : record.getAttribute('factory_function_type_id') %}
+            {% set form_work_time = is_edit_modal_open ? edit_form.work_time|default('') : record.getAttribute('work_time') %}
+            {% set form_active = is_edit_modal_open ? edit_form.active : record.active %}
+            {% set form_department_ids = show_departments ? (is_edit_modal_open ? edit_form.department_ids|default([]) : record.departmentIds()) : [] %}
+            {% set form_position_ids = show_positions ? (is_edit_modal_open ? edit_form.position_ids|default([]) : record.positionIds()) : [] %}
+            {% set form_training_course_ids = show_training_courses ? (is_edit_modal_open ? edit_form.training_course_ids|default([]) : record.trainingCourseIds()) : [] %}
+            {% set form_competency_assignments = show_competencies ? (is_edit_modal_open ? edit_form.competency_assignments|default([]) : record.competencyAssignmentData()) : [] %}
+            <div
+                class="modal fade admin-compact-modal{{ show_competencies ? ' function-form-modal' : '' }}"
+                id="editCatalogModal{{ record.id }}"
+                tabindex="-1"
+                aria-labelledby="editCatalogModalLabel{{ record.id }}"
+                aria-hidden="true"
+                data-open-modal="{{ is_edit_modal_open ? 'true' : 'false' }}"
+            >
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form method="post" action="{{ path(route_prefix ~ '_update', { id: record.id }) }}" class="admin-form">
+                            <div class="modal-header">
+                                <div>
+                                    <p class="app-kicker">{{ (translation_prefix ~ '.kicker')|trans }}</p>
+                                    <h2 class="modal-title" id="editCatalogModalLabel{{ record.id }}">{{ (translation_prefix ~ '.update_record')|trans }}</h2>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'common.close'|trans }}"></button>
+                            </div>
+
+                            <div class="modal-body">
+                                {% if is_edit_modal_open and edit_error %}
+                                    <div class="alert alert-danger js-auto-dismiss-alert" role="alert">{{ edit_error|trans }}</div>
+                                {% endif %}
+
+                                {% include 'admin/simple_catalog/_form_fields.html.twig' with {
+                                    form_name: form_name,
+                                    catalog_name_label: catalog_name_label,
+                                    form_process_code: form_process_code,
+                                    form_address: form_address,
+                                    form_factory_department_id: form_factory_department_id,
+                                    form_color: form_color,
+                                    form_alias: form_alias,
+                                    form_function_type_id: form_function_type_id,
+                                    form_work_time: form_work_time,
+                                    form_department_ids: form_department_ids,
+                                    form_position_ids: form_position_ids,
+                                    form_training_course_ids: form_training_course_ids,
+                                    form_competency_assignments: form_competency_assignments,
+                                    form_active: form_active,
+                                    show_process_code: show_process_code,
+                                    show_address: show_address,
+                                    show_factory_department: show_factory_department,
+                                    show_color: show_color,
+                                    show_alias: show_alias,
+                                    show_function_type: show_function_type,
+                                    show_work_time: show_work_time,
+                                    show_departments: show_departments,
+                                    show_positions: show_positions,
+                                    show_training_courses: show_training_courses,
+                                    show_competencies: show_competencies,
+                                    departments: departments,
+                                    factory_departments: factory_departments,
+                                    color_options: color_options,
+                                    positions: positions,
+                                    competencies: competencies,
+                                    training_courses: training_courses,
+                                    function_types: function_types,
+                                    include_status: true
+                                } only %}
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button>
+                                <button type="submit" class="btn btn-primary">{{ 'common.save'|trans }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if can_create %}
+        <div
+            class="modal fade admin-compact-modal{{ show_competencies ? ' function-form-modal' : '' }}"
+            id="createCatalogModal"
+            tabindex="-1"
+            aria-labelledby="createCatalogModalLabel"
+            aria-hidden="true"
+            data-open-modal="{{ open_create_modal ? 'true' : 'false' }}"
+        >
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="post" action="{{ path(route_prefix ~ '_create') }}" class="admin-form">
+                        <div class="modal-header">
+                            <div>
+                                <p class="app-kicker">{{ (translation_prefix ~ '.kicker')|trans }}</p>
+                                <h2 class="modal-title" id="createCatalogModalLabel">{{ (translation_prefix ~ '.new_record')|trans }}</h2>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'common.close'|trans }}"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            {% if create_error %}
+                                <div class="alert alert-danger js-auto-dismiss-alert" role="alert">{{ create_error|trans }}</div>
+                            {% endif %}
+
+                            {% include 'admin/simple_catalog/_form_fields.html.twig' with {
+                                form_name: create_form.name,
+                                catalog_name_label: catalog_name_label,
+                                form_process_code: create_form.process_code|default(''),
+                                form_address: create_form.address|default(''),
+                                form_factory_department_id: create_form.factory_department_id|default(''),
+                                form_color: create_form.color|default(color_options[0].value|default('')),
+                                form_alias: create_form.alias|default(''),
+                                form_function_type_id: create_form.function_type_id|default(''),
+                                form_work_time: create_form.work_time|default(''),
+                                form_department_ids: create_form.department_ids|default([]),
+                                form_position_ids: create_form.position_ids|default([]),
+                                form_training_course_ids: create_form.training_course_ids|default([]),
+                                form_competency_assignments: create_form.competency_assignments|default([]),
+                                form_active: true,
+                                show_process_code: show_process_code,
+                                show_address: show_address,
+                                show_factory_department: show_factory_department,
+                                show_color: show_color,
+                                show_alias: show_alias,
+                                show_function_type: show_function_type,
+                                show_work_time: show_work_time,
+                                show_departments: show_departments,
+                                show_positions: show_positions,
+                                show_training_courses: show_training_courses,
+                                show_competencies: show_competencies,
+                                departments: departments,
+                                factory_departments: factory_departments,
+                                color_options: color_options,
+                                positions: positions,
+                                competencies: competencies,
+                                training_courses: training_courses,
+                                function_types: function_types,
+                                include_status: false
+                            } only %}
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button>
+                            <button type="submit" class="btn btn-primary">{{ 'common.save'|trans }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

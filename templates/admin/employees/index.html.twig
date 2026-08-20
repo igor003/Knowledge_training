@@ -1,0 +1,106 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block admin_title %}{{ 'admin.nav.employees'|trans }}{% endblock %}
+{% block admin_heading %}{{ 'admin.nav.employees'|trans }}{% endblock %}
+{% block admin_breadcrumbs %}
+    <a href="{{ path('admin_dashboard') }}">{{ 'admin.nav.dashboard'|trans }}</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ 'admin.nav.employees'|trans }}</span>
+{% endblock %}
+
+{% macro fields(form, factory_departments, branches, sections, functions, shifts, employee_statuses, include_status) %}
+    <label>{{ 'employee.face_id'|trans }}<input class="form-control" name="face_id" value="{{ form.face_id|default('') }}" required></label>
+    <label>{{ 'employee.name'|trans }}<input class="form-control" name="name" value="{{ form.name|default('') }}" required></label>
+    <label>{{ 'employee.branch'|trans }}
+        <select class="form-select" name="factory_branch_id" required>
+            <option value="">{{ 'employee.select_branch'|trans }}</option>
+            {% for item in branches %}<option value="{{ item.id }}" {{ item.id == form.factory_branch_id ? 'selected' : '' }}>{{ item.label() }}</option>{% endfor %}
+        </select>
+    </label>
+    <label>{{ 'employee.department'|trans }}
+        <select class="form-select" name="factory_department_id" required>
+            <option value="">{{ 'employee.select_department'|trans }}</option>
+            {% for item in factory_departments %}<option value="{{ item.id }}" {{ item.id == form.factory_department_id ? 'selected' : '' }}>{{ item.label() }}</option>{% endfor %}
+        </select>
+    </label>
+    <label>{{ 'employee.section'|trans }}
+        <select class="form-select" name="factory_section_id" data-employee-section-select required>
+            <option value="">{{ 'employee.select_section'|trans }}</option>
+            {% for item in sections %}<option value="{{ item.id }}" data-factory-department-id="{{ item.factory_department_id }}" {{ item.id == form.factory_section_id ? 'selected' : '' }}>{{ item.label() }}</option>{% endfor %}
+        </select>
+    </label>
+    <label>{{ 'employee.function'|trans }}
+        <select class="form-select" name="factory_function_id" data-employee-function-select required>
+            <option value="">{{ 'employee.select_function'|trans }}</option>
+            {% for item in functions %}<option value="{{ item.id }}" data-section-ids="{{ item.departmentIds()|join(',') }}" data-section-orders="{{ item.departmentSortOrders()|json_encode|e('html_attr') }}" {{ item.id == form.factory_function_id ? 'selected' : '' }}>{{ item.label() }}</option>{% endfor %}
+        </select>
+    </label>
+    <label>{{ 'employee.shift'|trans }}
+        <select class="form-select" name="work_shift_id">
+            <option value="">{{ 'employee.no_shift'|trans }}</option>
+            {% for item in shifts %}<option value="{{ item.id }}" {{ item.id == form.work_shift_id ? 'selected' : '' }}>{{ item.label() }}</option>{% endfor %}
+        </select>
+    </label>
+    <label>{{ 'employee.status'|trans }}
+        <select class="form-select" name="employee_status_id" required>
+            <option value="">{{ 'employee.select_status'|trans }}</option>
+            {% for item in employee_statuses %}<option value="{{ item.id }}" {{ item.id == form.employee_status_id ? 'selected' : '' }}>{{ item.label() }}</option>{% endfor %}
+        </select>
+    </label>
+    <label>{{ 'employee.last_hired_at'|trans }}<input class="form-control" type="date" name="last_hired_at" value="{{ form.last_hired_at|default('') }}"></label>
+    {% if include_status %}<label>{{ 'employee.dismissed_at'|trans }}<input class="form-control" type="date" name="dismissed_at" value="{{ form.dismissed_at|default('') }}"></label>{% endif %}
+    <label>{{ 'employee.assignment_date'|trans }}<input class="form-control" type="date" name="assignment_date" value="{{ form.assignment_date|default('') }}" required></label>
+    <label class="form-check d-flex align-items-center gap-2 mt-2"><input class="form-check-input" type="checkbox" name="formator" value="1" {{ form.formator ? 'checked' : '' }}><span>{{ 'employee.formator'|trans }}</span></label>
+{% endmacro %}
+
+{% block admin_body %}
+    {% import 'admin/_icons.html.twig' as icons %}
+    {% import _self as forms %}
+    {% set has_row_actions = can_update or can_history_read %}
+    <section class="module-panel module-panel--table">
+        <div class="module-panel__header">
+            <div><p class="app-kicker">{{ 'employees.kicker'|trans }}</p><h2>{{ 'employees.title'|trans }}</h2></div>
+            {% if can_create %}<button class="btn btn-primary admin-create-button" type="button" data-bs-toggle="modal" data-bs-target="#createEmployeeModal">{{ icons.create() }}<span>{{ 'common.create'|trans }}</span></button>{% endif %}
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered admin-table employee-table js-data-table mb-0">
+                <thead><tr>
+                    <th>{{ 'employee.face_id'|trans }}</th><th>{{ 'employee.name'|trans }}</th><th>{{ 'employee.branch'|trans }}</th><th>{{ 'employee.last_hired_at'|trans }}</th><th>{{ 'employee.department'|trans }}</th><th>{{ 'employee.section'|trans }}</th><th>{{ 'employee.function'|trans }}</th><th>{{ 'employee.current_assignment_date'|trans }}</th><th>{{ 'catalog.type'|trans }}</th><th>{{ 'employee.shift'|trans }}</th><th>{{ 'employee.status'|trans }}</th><th class="text-center admin-table__icon-heading" aria-label="{{ 'employee.formator'|trans }}" title="{{ 'employee.formator'|trans }}">{{ icons.mentor() }}</th>{% if has_row_actions %}<th class="no-sort">{{ 'common.actions'|trans }}</th>{% endif %}
+                </tr></thead>
+                <tbody>
+                {% for employee in employees %}
+                    <tr class="employee-table__row" style="--employee-department-color: {{ employee.departmentColor() }}">
+                        <td>{{ employee.face_id }}</td><td>{{ employee.name }}</td><td>{{ employee.branchLabel() }}</td><td>{{ employee.getAttribute('last_hired_at') ? employee.getAttribute('last_hired_at')|date('d-m-Y') : '-' }}</td><td>{{ employee.department.label() }}</td><td>{{ employee.section.label() }}</td><td>{{ employee.position.label() }}</td><td>{{ employee.currentAssignmentDateLabel() }}</td><td>{{ employee.position ? employee.position.functionTypeLabel() : '-' }}</td><td>{{ employee.shift ? employee.shift.label() : '-' }}</td><td>{{ employee.employeeStatusLabel() ?: '-' }}</td><td class="text-center"><span title="{{ employee.formator ? 'common.yes'|trans : 'common.no'|trans }}" aria-label="{{ employee.formator ? 'common.yes'|trans : 'common.no'|trans }}">{% if employee.formator %}{{ icons.yes() }}{% else %}{{ icons.no() }}{% endif %}</span></td>
+                        {% if has_row_actions %}<td><div class="admin-row-actions">
+                            {% if can_history_read %}<button class="btn admin-row-action admin-row-action--edit" type="button" data-bs-toggle="modal" data-bs-target="#employeeHistoryModal{{ employee.id }}" title="{{ 'employee.history'|trans }}" aria-label="{{ 'employee.history'|trans }}">{{ icons.nav_audit_logs() }}</button>{% endif %}
+                            {% if can_update %}<button class="btn admin-row-action admin-row-action--edit" type="button" data-bs-toggle="modal" data-bs-target="#editEmployeeModal{{ employee.id }}" title="{{ 'common.update'|trans }}" aria-label="{{ 'common.update'|trans }}">{{ icons.edit() }}</button>{% endif %}
+                        </div></td>{% endif %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {% if can_update %}{% for employee in employees %}
+        {% set is_open = open_edit_employee_id == employee.id %}
+        {% set form = is_open ? edit_form : {face_id: employee.face_id, name: employee.name, factory_branch_id: employee.getAttribute('factory_branch_id'), factory_department_id: employee.getAttribute('factory_department_id'), factory_section_id: employee.getAttribute('factory_section_id'), factory_function_id: employee.getAttribute('factory_function_id'), work_shift_id: employee.getAttribute('work_shift_id'), employee_status_id: employee.getAttribute('employee_status_id'), last_hired_at: employee.getAttribute('last_hired_at') ? employee.getAttribute('last_hired_at')|date('Y-m-d') : '', dismissed_at: employee.getAttribute('dismissed_at') ? employee.getAttribute('dismissed_at')|date('Y-m-d') : '', assignment_date: 'now'|date('Y-m-d'), formator: employee.formator} %}
+        <div class="modal fade admin-compact-modal" id="editEmployeeModal{{ employee.id }}" tabindex="-1" data-open-modal="{{ is_open ? 'true' : 'false' }}"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><form method="post" action="{{ path('admin_employees_update', {id: employee.id}) }}" class="admin-form" data-employee-assignment-form><div class="modal-header"><h2 class="modal-title">{{ 'employees.update_record'|trans }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">{% if is_open and edit_error %}<div class="alert alert-danger js-auto-dismiss-alert" role="alert">{{ edit_error|trans }}</div>{% endif %}{{ forms.fields(form, factory_departments, branches, sections, functions, shifts, employee_statuses, true) }}</div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button><button type="submit" class="btn btn-primary">{{ 'common.save'|trans }}</button></div></form></div></div></div>
+    {% endfor %}{% endif %}
+
+    {% if can_create %}<div class="modal fade admin-compact-modal" id="createEmployeeModal" tabindex="-1" data-open-modal="{{ open_create_modal ? 'true' : 'false' }}"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><form method="post" action="{{ path('admin_employees_create') }}" class="admin-form" data-employee-assignment-form><div class="modal-header"><h2 class="modal-title">{{ 'employees.new_record'|trans }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">{% if create_error %}<div class="alert alert-danger js-auto-dismiss-alert" role="alert">{{ create_error|trans }}</div>{% endif %}{{ forms.fields(create_form, factory_departments, branches, sections, functions, shifts, employee_statuses, false) }}</div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button><button type="submit" class="btn btn-primary">{{ 'common.save'|trans }}</button></div></form></div></div></div>{% endif %}
+
+    {% if can_history_read %}{% for employee in employees %}
+        <div class="modal fade admin-compact-modal employee-history-modal" id="employeeHistoryModal{{ employee.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl"><div class="modal-content">
+                <div class="modal-header"><div><p class="app-kicker">{{ 'employee.history'|trans }}</p><h2 class="modal-title">{{ employee.name }} · {{ employee.getAttribute('face_id') }}</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'common.close'|trans }}"></button></div>
+                <div class="modal-body">
+                    <h3 class="employee-history-modal__heading">{{ 'employee.assignment_history'|trans }}</h3>
+                    <div class="table-responsive"><table class="table table-bordered admin-table employee-history-modal__table js-data-table mb-3"><thead><tr><th>{{ 'employee.department'|trans }}</th><th>{{ 'employee.section'|trans }}</th><th>{{ 'employee.function'|trans }}</th><th>{{ 'employee.shift'|trans }}</th><th>{{ 'employee.date_from'|trans }}</th><th>{{ 'employee.date_to'|trans }}</th></tr></thead><tbody>{% for item in employee.assignmentHistory %}<tr><td>{{ item.department.label() }}</td><td>{{ item.section.label() }}</td><td>{{ item.position.label() }}</td><td>{{ item.shift ? item.shift.label() : '-' }}</td><td>{{ item.getAttribute('date_from')|date('d-m-Y') }}</td><td>{{ item.getAttribute('date_to') ? item.getAttribute('date_to')|date('d-m-Y') : '-' }}</td></tr>{% endfor %}</tbody></table></div>
+                    <h3 class="employee-history-modal__heading">{{ 'employee.periods'|trans }}</h3>
+                    <div class="table-responsive"><table class="table table-bordered admin-table employee-history-modal__table js-data-table mb-0"><thead><tr><th>{{ 'employee.period_type'|trans }}</th><th>{{ 'employee.date_from'|trans }}</th><th>{{ 'employee.date_to'|trans }}</th><th>{{ 'employee.period_status'|trans }}</th><th>{{ 'employee.note'|trans }}</th></tr></thead><tbody>{% for period in employee.periods %}<tr><td>{{ (period.getAttribute('period_type') == 'vacation' ? 'employee.vacation' : 'employee.dismissal')|trans }}</td><td>{{ period.getAttribute('date_from')|date('d-m-Y') }}</td><td>{{ period.getAttribute('date_to') ? period.getAttribute('date_to')|date('d-m-Y') : '-' }}</td><td>{{ ('employee.period_status_' ~ period.statusKey())|trans }}</td><td>{{ period.getAttribute('note') ?: '-' }}</td></tr>{% endfor %}</tbody></table></div>
+                </div>
+            </div></div>
+        </div>
+    {% endfor %}{% endif %}
+{% endblock %}

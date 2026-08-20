@@ -1,0 +1,120 @@
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.app-brand small {
+  display: block;
+  color: var(--app-muted);
+  font-size: 12px;
+}
+
+.app-nav {
+  display: grid;
+  gap: 6px;
+}
+
+.app-nav__item {
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--app-radius);
+  background: transparent;
+  color: var(--app-muted);
+  font-weight: 600;
+  text-align: left;
+}
+
+.app-nav__item--active,
+.app-nav__item:hover {
+  background: var(--app-surface-muted);
+  color: var(--app-text);
+}
+
+.language-switcher {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+}
+
+.language-switcher__item {
+  min-width: 42px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--app-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.language-switcher__item--active {
+  background: var(--app-primary);
+  color: #fff;
+}
+
+.module-panel {
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow);
+}
+
+.module-panel--table {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.module-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.module-panel__body {
+  padding: 20px;
+  color: var(--app-muted);
+}
+
+.module-panel > .table-responsive,
+.module-panel > form > .table-responsive {
+  margin: 12px;
+}
+
+.module-panel--table > .module-panel__header,
+.module-panel--table > form > .module-panel__header,
+.module-panel--table > .admin-inline-alert {
+  flex: 0 0 auto;
+}
+
+.module-panel--table > form {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.module-panel--table > .table-responsive,
+.module-panel--table > form > .table-responsive {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+@media (max-width: 640px) {
+  .module-panel__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

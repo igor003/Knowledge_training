@@ -1,0 +1,197 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block admin_title %}{{ 'admin.nav.training_course_assessment_methods'|trans }}{% endblock %}
+{% block admin_heading %}{{ 'admin.nav.training_course_assessment_methods'|trans }}{% endblock %}
+{% block admin_breadcrumbs %}
+    <a href="{{ path('admin_dashboard') }}">{{ 'admin.nav.dashboard'|trans }}</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ 'admin.nav.training_course_assessment_methods'|trans }}</span>
+{% endblock %}
+
+{% macro method_form(form) %}
+    <label>
+        {{ 'training_course_assessment_method.name'|trans }}
+        <input class="form-control" name="name" type="text" value="{{ form.name }}" required>
+    </label>
+
+    <label>
+        {{ 'training_course_assessment_method.description'|trans }}
+        <textarea class="form-control" name="description" rows="3">{{ form.description }}</textarea>
+    </label>
+{% endmacro %}
+
+{% block admin_body %}
+    {% import 'admin/_icons.html.twig' as icons %}
+    {% import _self as forms %}
+    {% set has_row_actions = can_update or can_deactivate %}
+    <section class="module-panel module-panel--table">
+        <div class="module-panel__header">
+            <div>
+                <p class="app-kicker">{{ 'training_course_assessment_methods.kicker'|trans }}</p>
+                <h2>{{ 'training_course_assessment_methods.title'|trans }}</h2>
+            </div>
+            {% if can_create %}
+                <button
+                    class="btn btn-primary admin-create-button"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createTrainingCourseAssessmentMethodModal"
+                    aria-label="{{ 'training_course_assessment_methods.create_record'|trans }}"
+                    title="{{ 'training_course_assessment_methods.create_record'|trans }}"
+                >
+                    {{ icons.create() }}
+                    <span>{{ 'common.create'|trans }}</span>
+                </button>
+            {% endif %}
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered admin-table js-data-table mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ 'training_course_assessment_method.name'|trans }}</th>
+                        <th>{{ 'training_course_assessment_method.description'|trans }}</th>
+                        <th>{{ 'training_course_assessment_method.courses_count'|trans }}</th>
+                        <th>{{ 'training_course_assessment_method.status'|trans }}</th>
+                        {% if has_row_actions %}
+                            <th class="no-sort">{{ 'common.actions'|trans }}</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for method in methods %}
+                        {% set can_toggle_status = method.active ? can_deactivate : can_update %}
+                        <tr>
+                            <td>{{ method.label() }}</td>
+                            <td>{{ method.getAttribute('description') ?: '-' }}</td>
+                            <td>{{ method.getAttribute('courses_count')|default(0) }}</td>
+                            <td>{{ (method.active ? 'training_course_assessment_method.active' : 'training_course_assessment_method.inactive')|trans }}</td>
+                            {% if has_row_actions %}
+                                <td>
+                                    <div class="admin-row-actions">
+                                        {% if can_update %}
+                                            <button
+                                                class="btn admin-row-action admin-row-action--edit"
+                                                type="button"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editTrainingCourseAssessmentMethodModal{{ method.id }}"
+                                                aria-label="{{ 'common.update'|trans }}"
+                                                title="{{ 'common.update'|trans }}"
+                                            >
+                                                {{ icons.edit() }}
+                                            </button>
+                                        {% endif %}
+
+                                        {% if can_toggle_status %}
+                                            <form
+                                                method="post"
+                                                action="{{ path('admin_training_course_assessment_methods_toggle_status', { id: method.id }) }}"
+                                                onsubmit="return confirm('{{ (method.active ? 'training_course_assessment_methods.confirm_disable' : 'training_course_assessment_methods.confirm_activate')|trans|e('html_attr') }}')"
+                                            >
+                                                <button
+                                                    class="btn admin-row-action {{ method.active ? 'admin-row-action--active' : 'admin-row-action--inactive' }}"
+                                                    type="submit"
+                                                    aria-label="{{ (method.active ? 'common.disable' : 'common.activate')|trans }}"
+                                                    title="{{ (method.active ? 'common.disable' : 'common.activate')|trans }}"
+                                                >
+                                                    {% if method.active %}
+                                                        {{ icons.activate() }}
+                                                    {% else %}
+                                                        {{ icons.disable() }}
+                                                    {% endif %}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {% if can_update %}
+        {% for method in methods %}
+            {% set is_edit_modal_open = open_edit_method_id == method.id %}
+            {% set form = is_edit_modal_open ? edit_form : {
+                name: method.label(),
+                description: method.getAttribute('description')
+            } %}
+            <div
+                class="modal fade admin-compact-modal"
+                id="editTrainingCourseAssessmentMethodModal{{ method.id }}"
+                tabindex="-1"
+                aria-labelledby="editTrainingCourseAssessmentMethodModalLabel{{ method.id }}"
+                aria-hidden="true"
+                data-open-modal="{{ is_edit_modal_open ? 'true' : 'false' }}"
+            >
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form method="post" action="{{ path('admin_training_course_assessment_methods_update', { id: method.id }) }}" class="admin-form">
+                            <div class="modal-header">
+                                <div>
+                                    <p class="app-kicker">{{ 'training_course_assessment_methods.kicker'|trans }}</p>
+                                    <h2 class="modal-title" id="editTrainingCourseAssessmentMethodModalLabel{{ method.id }}">{{ 'training_course_assessment_methods.update_record'|trans }}</h2>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'common.close'|trans }}"></button>
+                            </div>
+
+                            <div class="modal-body">
+                                {% if is_edit_modal_open and edit_error %}
+                                    <div class="alert alert-danger js-auto-dismiss-alert" role="alert">{{ edit_error|trans }}</div>
+                                {% endif %}
+
+                                {{ forms.method_form(form) }}
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button>
+                                <button type="submit" class="btn btn-primary">{{ 'common.save'|trans }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if can_create %}
+        <div
+            class="modal fade admin-compact-modal"
+            id="createTrainingCourseAssessmentMethodModal"
+            tabindex="-1"
+            aria-labelledby="createTrainingCourseAssessmentMethodModalLabel"
+            aria-hidden="true"
+            data-open-modal="{{ open_create_modal ? 'true' : 'false' }}"
+        >
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="post" action="{{ path('admin_training_course_assessment_methods_create') }}" class="admin-form">
+                        <div class="modal-header">
+                            <div>
+                                <p class="app-kicker">{{ 'training_course_assessment_methods.kicker'|trans }}</p>
+                                <h2 class="modal-title" id="createTrainingCourseAssessmentMethodModalLabel">{{ 'training_course_assessment_methods.new_record'|trans }}</h2>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'common.close'|trans }}"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            {% if create_error %}
+                                <div class="alert alert-danger js-auto-dismiss-alert" role="alert">{{ create_error|trans }}</div>
+                            {% endif %}
+
+                            {{ forms.method_form(create_form) }}
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button>
+                            <button type="submit" class="btn btn-primary">{{ 'common.save'|trans }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

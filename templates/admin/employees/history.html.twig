@@ -1,0 +1,16 @@
+{% extends 'admin/layout.html.twig' %}
+{% block admin_title %}{{ 'employee.history'|trans }}{% endblock %}
+{% block admin_heading %}{{ employee.name }}{% endblock %}
+{% block admin_breadcrumbs %}<a href="{{ path('admin_employees_index') }}">{{ 'admin.nav.employees'|trans }}</a><span aria-hidden="true">/</span><span>{{ 'employee.history'|trans }}</span>{% endblock %}
+{% block admin_body %}
+    <div class="employee-history-page">
+        <section class="module-panel module-panel--table">
+            <div class="module-panel__header"><div><p class="app-kicker">{{ 'employees.kicker'|trans }}</p><h2>{{ employee.name }} · {{ employee.getAttribute('face_id') }}</h2></div></div>
+            <div class="table-responsive"><table class="table table-bordered admin-table mb-0"><thead><tr><th>{{ 'employee.department'|trans }}</th><th>{{ 'employee.section'|trans }}</th><th>{{ 'employee.function'|trans }}</th><th>{{ 'employee.shift'|trans }}</th><th>{{ 'employee.date_from'|trans }}</th><th>{{ 'employee.date_to'|trans }}</th></tr></thead><tbody>{% for item in assignment_history %}<tr><td>{{ item.department.label() }}</td><td>{{ item.section.label() }}</td><td>{{ item.position.label() }}</td><td>{{ item.shift ? item.shift.label() : '-' }}</td><td>{{ item.getAttribute('date_from')|date('d-m-Y') }}</td><td>{{ item.getAttribute('date_to') ? item.getAttribute('date_to')|date('d-m-Y') : '-' }}</td></tr>{% else %}<tr><td colspan="6">{{ 'employee.empty_history'|trans }}</td></tr>{% endfor %}</tbody></table></div>
+        </section>
+        <section class="module-panel module-panel--table">
+            <div class="module-panel__header"><div><p class="app-kicker">{{ 'employee.periods'|trans }}</p><h2>{{ 'employee.periods'|trans }}</h2></div></div>
+            <div class="table-responsive"><table class="table table-bordered admin-table mb-0"><thead><tr><th>{{ 'employee.period_type'|trans }}</th><th>{{ 'employee.date_from'|trans }}</th><th>{{ 'employee.date_to'|trans }}</th><th>{{ 'employee.period_status'|trans }}</th><th>{{ 'employee.note'|trans }}</th></tr></thead><tbody>{% for period in periods %}<tr><td>{{ (period.getAttribute('period_type') == 'vacation' ? 'employee.vacation' : 'employee.dismissal')|trans }}</td><td>{{ period.getAttribute('date_from')|date('d-m-Y') }}</td><td>{{ period.getAttribute('date_to') ? period.getAttribute('date_to')|date('d-m-Y') : '-' }}</td><td>{{ ('employee.period_status_' ~ period.statusKey())|trans }}</td><td>{{ period.getAttribute('note') ?: '-' }}</td></tr>{% else %}<tr><td colspan="5">{{ 'employee.empty_periods'|trans }}</td></tr>{% endfor %}</tbody></table></div>
+        </section>
+    </div>
+{% endblock %}

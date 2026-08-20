@@ -1,0 +1,188 @@
+{% if show_competencies %}<div class="function-form__main">{% endif %}
+
+<label>
+    {{ catalog_name_label|trans }}
+    <input class="form-control" name="name" type="text" value="{{ form_name }}" required>
+</label>
+
+{% if show_process_code %}
+    <label>
+        {{ 'catalog.process_code'|trans }}
+        <input class="form-control" name="process_code" type="text" value="{{ form_process_code }}" maxlength="2" pattern="[A-Za-z0-9]{2}" placeholder="P1">
+    </label>
+{% endif %}
+
+{% if show_address %}
+    <label>
+        {{ 'catalog.address'|trans }}
+        <textarea class="form-control" name="address" rows="2" maxlength="255" required>{{ form_address }}</textarea>
+    </label>
+{% endif %}
+
+{% if show_factory_department %}
+    <label>
+        {{ 'catalog.factory_department'|trans }}
+        <select class="form-select" name="factory_department_id" required>
+            <option value="">{{ 'catalog.select_factory_department'|trans }}</option>
+            {% for department in factory_departments %}
+                <option value="{{ department.id }}" {{ department.id == form_factory_department_id ? 'selected' : '' }}>
+                    {{ department.label() }}
+                </option>
+            {% endfor %}
+        </select>
+    </label>
+{% endif %}
+
+{% if show_color %}
+    <div class="admin-field admin-color-picker">
+        <span class="admin-field__label">{{ 'catalog.color'|trans }}</span>
+        <div class="admin-color-picker__options">
+            {% for option in color_options %}
+                <label class="admin-color-picker__option" title="{{ option.label|trans }}">
+                    <input type="radio" name="color_preset" value="{{ option.value }}" {{ option.value == form_color ? 'checked' : '' }}>
+                    <span class="admin-color-picker__swatch" style="--catalog-color: {{ option.value }}"></span>
+                    <span class="visually-hidden">{{ option.label|trans }}</span>
+                </label>
+            {% endfor %}
+            <label class="admin-color-picker__custom" title="{{ 'catalog.color_custom'|trans }}">
+                <span class="admin-color-picker__custom-label">{{ 'catalog.color_custom'|trans }}</span>
+                <input class="admin-color-picker__input" name="color" type="color" value="{{ form_color|default('#C8E8D2') }}" aria-label="{{ 'catalog.color_custom'|trans }}">
+            </label>
+        </div>
+    </div>
+{% endif %}
+
+{% if show_alias %}
+    <label>
+        {{ 'catalog.alias'|trans }}
+        <input class="form-control" name="alias" type="text" value="{{ form_alias }}" maxlength="80">
+    </label>
+{% endif %}
+
+{% if show_function_type %}
+    <label>
+        {{ 'catalog.function_type'|trans }}
+        <select class="form-select" name="function_type_id">
+            <option value="">{{ 'catalog.select_function_type'|trans }}</option>
+            {% for function_type in function_types %}
+                <option value="{{ function_type.id }}" {{ function_type.id == form_function_type_id ? 'selected' : '' }}>{{ function_type.label() }}</option>
+            {% endfor %}
+        </select>
+    </label>
+{% endif %}
+
+{% if show_work_time %}
+    <label>
+        {{ 'catalog.work_time'|trans }}
+        <input class="form-control" name="work_time" type="text" value="{{ form_work_time }}" maxlength="20" pattern="([01][0-9]|2[0-3]):[0-5][0-9]\s*-\s*([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="10:00 - 18:00">
+    </label>
+{% endif %}
+
+{% if show_departments %}
+    <div class="admin-field">
+        <span class="admin-field__label">{{ 'catalog.departments'|trans }}</span>
+        <select
+            class="form-select admin-catalog-multiselect js-admin-multiselect"
+            name="department_ids[]"
+            multiple
+            required
+            size="5"
+            data-placeholder="{{ 'catalog.multiselect_placeholder'|trans }}"
+            data-search-placeholder="{{ 'catalog.multiselect_search'|trans }}"
+            data-selected-template="{{ 'catalog.multiselect_selected'|trans }}"
+            data-empty-text="{{ 'catalog.multiselect_empty'|trans }}"
+        >
+            {% for department in departments %}
+                <option value="{{ department.id }}" {{ department.id in form_department_ids ? 'selected' : '' }}>
+                    {{ department.label() }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+{% endif %}
+
+{% if show_positions %}
+    <div class="admin-field">
+        <span class="admin-field__label">{{ 'catalog.positions'|trans }}</span>
+        <select
+            class="form-select admin-catalog-multiselect js-admin-multiselect"
+            name="position_ids[]"
+            multiple
+            size="5"
+            data-placeholder="{{ 'catalog.multiselect_placeholder'|trans }}"
+            data-search-placeholder="{{ 'catalog.multiselect_search'|trans }}"
+            data-selected-template="{{ 'catalog.multiselect_selected'|trans }}"
+            data-empty-text="{{ 'catalog.multiselect_empty'|trans }}"
+            data-ordered="true"
+        >
+            {% for selected_position_id in form_position_ids %}
+                {% for position in positions %}
+                    {% if position.id == selected_position_id %}
+                        <option value="{{ position.id }}" selected>{{ position.label() }}</option>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+            {% for position in positions %}
+                {% if position.id not in form_position_ids %}
+                    <option value="{{ position.id }}">{{ position.label() }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+    </div>
+{% endif %}
+
+{% if show_training_courses %}
+    <div class="admin-field">
+        <span class="admin-field__label">{{ 'admin.nav.training_courses'|trans }}</span>
+        <select
+            class="form-select admin-catalog-multiselect js-admin-multiselect"
+            name="training_course_ids[]"
+            multiple
+            size="5"
+            data-placeholder="{{ 'catalog.multiselect_placeholder'|trans }}"
+            data-search-placeholder="{{ 'catalog.multiselect_search'|trans }}"
+            data-selected-template="{{ 'catalog.multiselect_selected'|trans }}"
+            data-empty-text="{{ 'catalog.multiselect_empty'|trans }}"
+            data-summary-mode="count"
+        >
+            {% for course in training_courses %}
+                <option value="{{ course.id }}" {{ course.id in form_training_course_ids ? 'selected' : '' }}>{{ course.label() }}</option>
+            {% endfor %}
+        </select>
+    </div>
+{% endif %}
+
+{% if show_competencies %}
+    </div>
+    <div class="function-form__competencies">
+    <div class="admin-field function-competency-picker" data-function-competency-picker data-remove-label="{{ 'common.delete'|trans }}" data-critical-label="{{ 'competency.critical'|trans }}" data-competency-label="{{ 'competency.name'|trans }}">
+        <span class="admin-field__label">{{ 'competency.competencies'|trans }}</span>
+        <div class="function-competency-picker__fields">
+            <div class="function-competency-picker__search">
+                <input class="form-control" type="search" data-function-competency-search placeholder="{{ 'competency.search'|trans }}" autocomplete="off">
+                <div class="admin-smart-search__suggestions" data-function-competency-suggestions hidden>
+                    {% for competency in competencies %}<button type="button" class="admin-smart-search__suggestion" data-competency-id="{{ competency.id }}">{{ competency.label() }}</button>{% endfor %}
+                </div>
+            </div>
+            <button class="btn admin-row-action admin-row-action--edit" type="button" data-function-competency-add aria-label="{{ 'competency.add_competency'|trans }}" title="{{ 'competency.add_competency'|trans }}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+        </div>
+        <div class="function-competency-picker__matrix" data-function-competency-matrix>
+            <div class="function-competency-picker__list" data-function-competency-list>
+            {% for assignment in form_competency_assignments %}
+                <input type="hidden" class="function-competency-picker__initial" name="competency_assignments[]" value="{{ assignment.factory_section_id }}:{{ assignment.competency_id }}:{{ assignment.critical ? 1 : 0 }}">
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+    </div>
+{% endif %}
+
+{% if include_status %}
+    <label>
+        {{ 'catalog.status'|trans }}
+        <select class="form-select" name="active" required>
+            <option value="1" {{ form_active ? 'selected' : '' }}>{{ 'catalog.active'|trans }}</option>
+            <option value="0" {{ not form_active ? 'selected' : '' }}>{{ 'catalog.inactive'|trans }}</option>
+        </select>
+    </label>
+{% endif %}

@@ -1,0 +1,12 @@
+.test-workspace {
+  display: grid;
+  gap: 16px;
+}
+
+.test-question-media {
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  border-radius: var(--app-radius);
+  background: var(--app-surface-muted);
+}

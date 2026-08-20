@@ -1,0 +1,102 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block admin_title %}{{ 'admin.nav.audit_logs'|trans }}{% endblock %}
+{% block admin_heading %}{{ 'admin.nav.audit_logs'|trans }}{% endblock %}
+{% block admin_breadcrumbs %}
+    <a href="{{ path('admin_dashboard') }}">{{ 'admin.nav.dashboard'|trans }}</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ 'admin.nav.audit_logs'|trans }}</span>
+{% endblock %}
+
+{% block admin_body %}
+    <section class="module-panel module-panel--table">
+        <div class="module-panel__header">
+            <div>
+                <p class="app-kicker">{{ 'audit.access_control'|trans }}</p>
+                <h2>{{ 'audit.title'|trans }}</h2>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered admin-table js-data-table admin-audit-table mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ 'audit.created_at'|trans }}</th>
+                        <th>{{ 'audit.actor'|trans }}</th>
+                        <th>{{ 'audit.action'|trans }}</th>
+                        <th>{{ 'audit.entity'|trans }}</th>
+                        <th>{{ 'audit.record'|trans }}</th>
+                        <th>{{ 'audit.ip_address'|trans }}</th>
+                        <th>{{ 'audit.request'|trans }}</th>
+                        <th>{{ 'audit.route'|trans }}</th>
+                        <th>{{ 'audit.user_agent'|trans }}</th>
+                        <th>{{ 'audit.details'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                        {% set created_at = log.getAttribute('created_at') %}
+                        {% set actor_name = log.getAttribute('actor_name') %}
+                        {% set actor_role_code = log.getAttribute('actor_role_code') %}
+                        {% set action = log.getAttribute('action') %}
+                        {% set entity_code = log.getAttribute('entity_code') %}
+                        {% set entity_id = log.getAttribute('entity_id') %}
+                        {% set entity_label = log.getAttribute('entity_label') %}
+                        {% set before_values = log.getAttribute('before_values') %}
+                        {% set after_values = log.getAttribute('after_values') %}
+                        {% set metadata = log.getAttribute('metadata') %}
+                        {% set display_action = action %}
+                        {% if metadata.status_toggle|default(false) %}
+                            {% set display_action = after_values.active|default(false) ? 'activate' : 'deactivate' %}
+                        {% endif %}
+                        <tr>
+                            <td>{{ created_at ? created_at|date('Y-m-d H:i:s') : '-' }}</td>
+                            <td>
+                                <strong>{{ actor_name ?: '-' }}</strong>
+                                {% if actor_role_code %}
+                                    <span class="admin-audit-muted">{{ actor_role_code }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="admin-audit-action admin-audit-action--{{ display_action }}">
+                                    {{ ('audit.action_label.' ~ display_action)|trans }}
+                                </span>
+                            </td>
+                            <td>{{ entity_code }}</td>
+                            <td>
+                                <strong>{{ entity_label ?: '-' }}</strong>
+                                {% if entity_id %}
+                                    <span class="admin-audit-muted">#{{ entity_id }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.getAttribute('ip_address') ?: '-' }}</td>
+                            <td>
+                                <strong>{{ log.getAttribute('request_method') }}</strong>
+                                <span class="admin-audit-muted">{{ log.getAttribute('request_path') }}</span>
+                            </td>
+                            <td>{{ log.getAttribute('route_name') ?: '-' }}</td>
+                            <td class="admin-audit-user-agent">{{ log.getAttribute('user_agent') ?: '-' }}</td>
+                            <td>
+                                <details class="admin-audit-details">
+                                    <summary>{{ 'audit.show_details'|trans }}</summary>
+                                    <div>
+                                        <strong>{{ 'audit.before'|trans }}</strong>
+                                        <pre>{{ before_values ? before_values|json_encode(constant('JSON_PRETTY_PRINT')) : '-' }}</pre>
+                                    </div>
+                                    <div>
+                                        <strong>{{ 'audit.after'|trans }}</strong>
+                                        <pre>{{ after_values ? after_values|json_encode(constant('JSON_PRETTY_PRINT')) : '-' }}</pre>
+                                    </div>
+                                    <div>
+                                        <strong>{{ 'audit.metadata'|trans }}</strong>
+                                        <pre>{{ metadata ? metadata|json_encode(constant('JSON_PRETTY_PRINT')) : '-' }}</pre>
+                                    </div>
+                                </details>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

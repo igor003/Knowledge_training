@@ -1,0 +1,141 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block admin_title %}{{ 'admin.nav.employee_periods'|trans }}{% endblock %}
+{% block admin_heading %}{{ 'admin.nav.employee_periods'|trans }}{% endblock %}
+{% block admin_breadcrumbs %}
+    <a href="{{ path('admin_dashboard') }}">{{ 'admin.nav.dashboard'|trans }}</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ 'admin.nav.employee_periods'|trans }}</span>
+{% endblock %}
+
+{% macro period_form(form, employees) %}
+    <label>
+        {{ 'employee.name'|trans }}
+        <input class="form-control mb-1" type="search" data-employee-search placeholder="{{ 'employee.search_employee'|trans }}" autocomplete="off">
+        <select class="form-select" name="employee_id" required>
+            <option value="">{{ 'employee.select_employee'|trans }}</option>
+            {% for employee in employees %}
+                <option value="{{ employee.id }}" {{ form.employee_id|default(0) == employee.id ? 'selected' : '' }}>{{ employee.getAttribute('face_id') }} / {{ employee.name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>
+        {{ 'employee.period_type'|trans }}
+        <select class="form-select" name="period_type" data-period-type required>
+            <option value="vacation" {{ form.period_type|default('vacation') == 'vacation' ? 'selected' : '' }}>{{ 'employee.vacation'|trans }}</option>
+            <option value="dismissal" {{ form.period_type|default('') == 'dismissal' ? 'selected' : '' }}>{{ 'employee.dismissal'|trans }}</option>
+        </select>
+    </label>
+    <label>
+        {{ 'employee.date_from'|trans }}
+        <input class="form-control" type="date" name="date_from" value="{{ form.date_from|default('') }}" required>
+    </label>
+    <label data-period-date-to>
+        {{ 'employee.date_to'|trans }}
+        <input class="form-control" type="date" name="date_to" value="{{ form.date_to|default('') }}">
+    </label>
+    <label>
+        {{ 'employee.note'|trans }}
+        <textarea class="form-control" name="note" rows="3" maxlength="2000">{{ form.note|default('') }}</textarea>
+    </label>
+{% endmacro %}
+
+{% block admin_body %}
+    {% import 'admin/_icons.html.twig' as icons %}
+    {% import _self as forms %}
+    {% set has_row_actions = can_update or can_deactivate or can_delete %}
+    <section class="module-panel module-panel--table">
+        <div class="module-panel__header">
+            <div>
+                <p class="app-kicker">{{ 'employee_periods.kicker'|trans }}</p>
+                <h2>{{ 'employee_periods.title'|trans }}</h2>
+            </div>
+            {% if can_create %}
+                <button class="btn btn-primary admin-create-button" type="button" data-bs-toggle="modal" data-bs-target="#createEmployeePeriodModal" title="{{ 'employee_periods.create_record'|trans }}">
+                    {{ icons.create() }} <span>{{ 'common.create'|trans }}</span>
+                </button>
+            {% endif %}
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered admin-table js-data-table mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ 'employee.name'|trans }}</th>
+                        <th>{{ 'employee.period_type'|trans }}</th>
+                        <th>{{ 'employee.date_from'|trans }}</th>
+                        <th>{{ 'employee.date_to'|trans }}</th>
+                        <th>{{ 'employee.period_status'|trans }}</th>
+                        <th>{{ 'employee.note'|trans }}</th>
+                        {% if has_row_actions %}<th class="no-sort">{{ 'common.actions'|trans }}</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for period in periods %}
+                        <tr>
+                            <td>{{ period.employee.getAttribute('face_id') }} / {{ period.employee.name }}</td>
+                            <td>{{ (period.period_type == 'vacation' ? 'employee.vacation' : 'employee.dismissal')|trans }}</td>
+                            <td>{{ period.date_from ? period.date_from|date('d-m-Y') : '-' }}</td>
+                            <td>{{ period.date_to ? period.date_to|date('d-m-Y') : '-' }}</td>
+                            <td>{{ ('employee.period_status_' ~ period.statusKey())|trans }}</td>
+                            <td>{{ period.getAttribute('note') ?: '-' }}</td>
+                            {% if has_row_actions %}
+                                <td>
+                                    <div class="admin-row-actions">
+                                        {% if can_update %}
+                                            <button class="btn admin-row-action admin-row-action--edit" type="button" data-bs-toggle="modal" data-bs-target="#editEmployeePeriodModal{{ period.id }}" aria-label="{{ 'common.update'|trans }}" title="{{ 'common.update'|trans }}">{{ icons.edit() }}</button>
+                                        {% endif %}
+                                        {% if can_deactivate and period.active %}
+                                            <form method="post" action="{{ path('admin_employee_periods_deactivate', {id: period.id}) }}" onsubmit="return confirm('{{ 'employee_periods.confirm_deactivate'|trans|e('html_attr') }}')">
+                                                <button class="btn admin-row-action admin-row-action--active" type="submit" aria-label="{{ 'common.disable'|trans }}" title="{{ 'common.disable'|trans }}">{{ icons.disable() }}</button>
+                                            </form>
+                                        {% endif %}
+                                        {% if can_delete %}
+                                            <form method="post" action="{{ path('admin_employee_periods_delete', {id: period.id}) }}" onsubmit="return confirm('{{ 'employee_periods.confirm_physical_delete'|trans|e('html_attr') }}')">
+                                                <button class="btn admin-row-action admin-row-action--delete" type="submit" aria-label="{{ 'common.delete'|trans }}" title="{{ 'common.delete'|trans }}">{{ icons.trash() }}</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {% if can_update %}
+        {% for period in periods %}
+            {% set is_open = open_edit_period_id == period.id %}
+            {% set form = is_open ? edit_form : {employee_id: period.employee_id, period_type: period.period_type, date_from: period.date_from ? period.date_from|date('Y-m-d') : '', date_to: period.date_to ? period.date_to|date('Y-m-d') : '', note: period.getAttribute('note')} %}
+            <div class="modal fade admin-compact-modal" id="editEmployeePeriodModal{{ period.id }}" tabindex="-1" data-open-modal="{{ is_open ? 'true' : 'false' }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+                    <form method="post" action="{{ path('admin_employee_periods_update', {id: period.id}) }}" class="admin-form" data-employee-period-form>
+                        <div class="modal-header"><div><p class="app-kicker">{{ 'employee_periods.kicker'|trans }}</p><h2 class="modal-title">{{ 'employee_periods.update_record'|trans }}</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'common.close'|trans }}"></button></div>
+                        <div class="modal-body">
+                            {% if is_open and edit_error %}<div class="alert alert-danger js-auto-dismiss-alert" role="alert">{{ edit_error|trans }}</div>{% endif %}
+                            {{ forms.period_form(form, employees) }}
+                        </div>
+                        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button><button type="submit" class="btn btn-primary">{{ 'common.save'|trans }}</button></div>
+                    </form>
+                </div></div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if can_create %}
+        <div class="modal fade admin-compact-modal" id="createEmployeePeriodModal" tabindex="-1" data-open-modal="{{ open_create_modal ? 'true' : 'false' }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+                <form method="post" action="{{ path('admin_employee_periods_create') }}" class="admin-form" data-employee-period-form>
+                    <div class="modal-header"><div><p class="app-kicker">{{ 'employee_periods.kicker'|trans }}</p><h2 class="modal-title">{{ 'employee_periods.new_record'|trans }}</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'common.close'|trans }}"></button></div>
+                    <div class="modal-body">
+                        {% if create_error %}<div class="alert alert-danger js-auto-dismiss-alert" role="alert">{{ create_error|trans }}</div>{% endif %}
+                        {{ forms.period_form(create_form, employees) }}
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button><button type="submit" class="btn btn-primary">{{ 'common.save'|trans }}</button></div>
+                </form>
+            </div></div>
+        </div>
+    {% endif %}
+{% endblock %}

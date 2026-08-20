@@ -1,0 +1,214 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block admin_title %}{{ 'admin.nav.training_course_types'|trans }}{% endblock %}
+{% block admin_heading %}{{ 'admin.nav.training_course_types'|trans }}{% endblock %}
+{% block admin_breadcrumbs %}
+    <a href="{{ path('admin_dashboard') }}">{{ 'admin.nav.dashboard'|trans }}</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ 'admin.nav.training_course_types'|trans }}</span>
+{% endblock %}
+
+{% macro type_form(form) %}
+    <label>
+        {{ 'training_course_type.name'|trans }}
+        <input class="form-control" name="name" type="text" value="{{ form.name }}" required>
+    </label>
+
+    <label>
+        {{ 'training_course_type.description'|trans }}
+        <textarea class="form-control" name="description" rows="3">{{ form.description }}</textarea>
+    </label>
+{% endmacro %}
+
+{% block admin_body %}
+    {% import 'admin/_icons.html.twig' as icons %}
+    {% import _self as forms %}
+    {% set has_row_actions = can_update or can_deactivate or can_delete %}
+    <section class="module-panel module-panel--table">
+        <div class="module-panel__header">
+            <div>
+                <p class="app-kicker">{{ 'training_course_types.kicker'|trans }}</p>
+                <h2>{{ 'training_course_types.title'|trans }}</h2>
+            </div>
+            {% if can_create %}
+                <button
+                    class="btn btn-primary admin-create-button"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createTrainingCourseTypeModal"
+                    aria-label="{{ 'training_course_types.create_record'|trans }}"
+                    title="{{ 'training_course_types.create_record'|trans }}"
+                >
+                    {{ icons.create() }}
+                    <span>{{ 'common.create'|trans }}</span>
+                </button>
+            {% endif %}
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered admin-table js-data-table mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ 'training_course_type.name'|trans }}</th>
+                        <th>{{ 'training_course_type.description'|trans }}</th>
+                        <th>{{ 'training_course_type.courses_count'|trans }}</th>
+                        <th>{{ 'training_course_type.status'|trans }}</th>
+                        {% if has_row_actions %}
+                            <th class="no-sort">{{ 'common.actions'|trans }}</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for type in types %}
+                        {% set can_toggle_status = type.active ? can_deactivate : can_update %}
+                        <tr>
+                            <td>{{ type.label() }}</td>
+                            <td>{{ type.getAttribute('description') ?: '-' }}</td>
+                            <td>{{ type.getAttribute('courses_count')|default(0) }}</td>
+                            <td>{{ (type.active ? 'training_course_type.active' : 'training_course_type.inactive')|trans }}</td>
+                            {% if has_row_actions %}
+                                <td>
+                                    <div class="admin-row-actions">
+                                        {% if can_update %}
+                                            <button
+                                                class="btn admin-row-action admin-row-action--edit"
+                                                type="button"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editTrainingCourseTypeModal{{ type.id }}"
+                                                aria-label="{{ 'common.update'|trans }}"
+                                                title="{{ 'common.update'|trans }}"
+                                            >
+                                                {{ icons.edit() }}
+                                            </button>
+                                        {% endif %}
+
+                                        {% if can_toggle_status %}
+                                            <form
+                                                method="post"
+                                                action="{{ path('admin_training_course_types_toggle_status', { id: type.id }) }}"
+                                                onsubmit="return confirm('{{ (type.active ? 'training_course_types.confirm_disable' : 'training_course_types.confirm_activate')|trans|e('html_attr') }}')"
+                                            >
+                                                <button
+                                                    class="btn admin-row-action {{ type.active ? 'admin-row-action--active' : 'admin-row-action--inactive' }}"
+                                                    type="submit"
+                                                    aria-label="{{ (type.active ? 'common.disable' : 'common.activate')|trans }}"
+                                                    title="{{ (type.active ? 'common.disable' : 'common.activate')|trans }}"
+                                                >
+                                                    {% if type.active %}
+                                                        {{ icons.activate() }}
+                                                    {% else %}
+                                                        {{ icons.disable() }}
+                                                    {% endif %}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+
+                                        {% if can_delete %}
+                                            <form
+                                                method="post"
+                                                action="{{ path('admin_training_course_types_delete', { id: type.id }) }}"
+                                                onsubmit="return confirm('{{ 'training_course_types.confirm_physical_delete'|trans|e('html_attr') }}')"
+                                            >
+                                                <button
+                                                    class="btn admin-row-action admin-row-action--delete"
+                                                    type="submit"
+                                                    aria-label="{{ 'common.delete'|trans }}"
+                                                    title="{{ 'common.delete'|trans }}"
+                                                >
+                                                    {{ icons.trash() }}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {% if can_update %}
+        {% for type in types %}
+            {% set is_edit_modal_open = open_edit_type_id == type.id %}
+            {% set form = is_edit_modal_open ? edit_form : {
+                name: type.label(),
+                description: type.getAttribute('description')
+            } %}
+            <div
+                class="modal fade admin-compact-modal"
+                id="editTrainingCourseTypeModal{{ type.id }}"
+                tabindex="-1"
+                aria-labelledby="editTrainingCourseTypeModalLabel{{ type.id }}"
+                aria-hidden="true"
+                data-open-modal="{{ is_edit_modal_open ? 'true' : 'false' }}"
+            >
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form method="post" action="{{ path('admin_training_course_types_update', { id: type.id }) }}" class="admin-form">
+                            <div class="modal-header">
+                                <div>
+                                    <p class="app-kicker">{{ 'training_course_types.kicker'|trans }}</p>
+                                    <h2 class="modal-title" id="editTrainingCourseTypeModalLabel{{ type.id }}">{{ 'training_course_types.update_record'|trans }}</h2>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'common.close'|trans }}"></button>
+                            </div>
+
+                            <div class="modal-body">
+                                {% if is_edit_modal_open and edit_error %}
+                                    <div class="alert alert-danger js-auto-dismiss-alert" role="alert">{{ edit_error|trans }}</div>
+                                {% endif %}
+
+                                {{ forms.type_form(form) }}
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button>
+                                <button type="submit" class="btn btn-primary">{{ 'common.save'|trans }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if can_create %}
+        <div
+            class="modal fade admin-compact-modal"
+            id="createTrainingCourseTypeModal"
+            tabindex="-1"
+            aria-labelledby="createTrainingCourseTypeModalLabel"
+            aria-hidden="true"
+            data-open-modal="{{ open_create_modal ? 'true' : 'false' }}"
+        >
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="post" action="{{ path('admin_training_course_types_create') }}" class="admin-form">
+                        <div class="modal-header">
+                            <div>
+                                <p class="app-kicker">{{ 'training_course_types.kicker'|trans }}</p>
+                                <h2 class="modal-title" id="createTrainingCourseTypeModalLabel">{{ 'training_course_types.new_record'|trans }}</h2>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'common.close'|trans }}"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            {% if create_error %}
+                                <div class="alert alert-danger js-auto-dismiss-alert" role="alert">{{ create_error|trans }}</div>
+                            {% endif %}
+
+                            {{ forms.type_form(create_form) }}
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button>
+                            <button type="submit" class="btn btn-primary">{{ 'common.save'|trans }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

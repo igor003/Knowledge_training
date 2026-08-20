@@ -1,0 +1,28 @@
+{
+  "name": "knowledge_training",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "proprietary",
+  "description": "Knowledge training frontend bundle",
+  "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "bootstrap": "^5.3.8",
+    "datatables.net": "^2.3.8",
+    "datatables.net-bs5": "^2.3.8",
+    "datatables.net-rowreorder": "^1.5.0",
+    "datatables.net-rowreorder-bs5": "^1.5.0",
+    "jquery": "^4.0.0",
+    "sass": "^1.101.6",
+    "vite": "^8.1.5",
+    "vue": "^3.5.40"
+  }
+}

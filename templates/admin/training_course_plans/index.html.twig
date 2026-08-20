@@ -1,0 +1,266 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block admin_title %}{{ 'admin.nav.training_course_plans'|trans }}{% endblock %}
+{% block admin_heading %}{{ 'admin.nav.training_course_plans'|trans }}{% endblock %}
+{% block admin_breadcrumbs %}
+    <a href="{{ path('admin_dashboard') }}">{{ 'admin.nav.dashboard'|trans }}</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ 'admin.nav.training_course_plans'|trans }}</span>
+{% endblock %}
+
+{% macro percent(value) %}
+    {% if value is same as(null) %}
+        <span class="admin-training-plan-muted">-</span>
+    {% else %}
+        {% set state = value > 90 ? 'good' : (value >= 80 ? 'warning' : 'danger') %}
+        <span class="admin-training-plan-percent admin-training-plan-percent--{{ state }}">{{ value }}%</span>
+    {% endif %}
+{% endmacro %}
+
+{% macro header_icon(type, label) %}
+    <span class="admin-training-plan-head-icon admin-training-plan-head-icon--{{ type }}" title="{{ label }}" aria-label="{{ label }}">
+        {% if type == 'planned' %}
+            <svg class="bi bi-calendar-plus" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7"/>
+                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+            </svg>
+        {% elseif type == 'completed' %}
+            <svg class="bi bi-check2-circle" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path d="M2.5 8a5.5 5.5 0 0 1 8.25-4.764.5.5 0 0 0 .5-.866A6.5 6.5 0 1 0 14.5 8a.5.5 0 0 0-1 0 5.5 5.5 0 1 1-11 0"/>
+                <path d="M15.354 3.354a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+            </svg>
+        {% else %}
+            <svg class="bi bi-percent" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path d="M13.442 2.558a.625.625 0 0 1 0 .884l-10 10a.625.625 0 1 1-.884-.884l10-10a.625.625 0 0 1 .884 0M4.5 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m0 1a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m7 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m0 1a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5"/>
+            </svg>
+        {% endif %}
+        <span class="visually-hidden">{{ label }}</span>
+    </span>
+{% endmacro %}
+
+{% block admin_body %}
+    {% import _self as plan_helpers %}
+
+    <section class="module-panel module-panel--table">
+        <div class="module-panel__header admin-training-plan-header">
+            <div>
+                <p class="app-kicker">{{ 'training_plan.kicker'|trans }}</p>
+                <h2>{{ 'training_plan.title'|trans }}</h2>
+            </div>
+
+            <div class="admin-training-plan-toolbar">
+                <form class="admin-training-plan-filter" method="get" action="{{ path('admin_training_course_plans_index') }}" data-auto-submit-form>
+                    <label>
+                        <span>{{ 'training_plan.department'|trans }}</span>
+                        <select class="form-select" name="department_id" data-auto-submit-control>
+                            <option value="" {{ not selected_department ? 'selected' : '' }}>{{ 'training_plan.all_departments'|trans }}</option>
+                            {% for department in departments %}
+                                <option value="{{ department.id }}" {{ selected_department and selected_department.id == department.id ? 'selected' : '' }}>
+                                    {{ department.label() }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <span>{{ 'training_plan.year'|trans }}</span>
+                        <select class="form-select" name="year" data-auto-submit-control>
+                            {% for option_year in years %}
+                                <option value="{{ option_year }}" {{ year == option_year ? 'selected' : '' }}>{{ option_year }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </form>
+
+                {% if can_update %}
+                    <button
+                        class="btn admin-create-button"
+                        type="button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#trainingCoursePlanModal"
+                    >
+                        <svg class="bi bi-calendar-plus admin-training-plan-header-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                            <path d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7"/>
+                            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                        </svg>
+                        <span>{{ 'training_plan.plan_record'|trans }}</span>
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if rows is empty %}
+            <div class="module-panel__body">
+                {{ departments is empty ? ('training_plan.empty_departments'|trans) : ('training_plan.empty_planned_courses'|trans) }}
+            </div>
+        {% else %}
+            <div class="admin-training-plan-legend" aria-label="{{ 'training_plan.legend_title'|trans }}">
+                <span class="admin-training-plan-legend__title">{{ 'training_plan.legend_title'|trans }}</span>
+                <span class="admin-training-plan-legend__item">
+                    <span class="admin-training-plan-legend__swatch admin-training-plan-legend__swatch--good" aria-hidden="true"></span>
+                    <span>{{ 'training_plan.legend_good'|trans }}</span>
+                </span>
+                <span class="admin-training-plan-legend__item">
+                    <span class="admin-training-plan-legend__swatch admin-training-plan-legend__swatch--warning" aria-hidden="true"></span>
+                    <span>{{ 'training_plan.legend_warning'|trans }}</span>
+                </span>
+                <span class="admin-training-plan-legend__item">
+                    <span class="admin-training-plan-legend__swatch admin-training-plan-legend__swatch--danger" aria-hidden="true"></span>
+                    <span>{{ 'training_plan.legend_danger'|trans }}</span>
+                </span>
+            </div>
+
+            <div class="table-responsive admin-static-table admin-training-plan-wrapper">
+                <table class="table table-bordered admin-table admin-training-plan-table mb-0">
+                    <thead>
+                        <tr class="admin-training-plan-head-row--main">
+                            <th rowspan="2" class="admin-training-plan-sticky-left admin-training-plan-sticky-col--department">{{ 'training_plan.department'|trans }}</th>
+                            <th rowspan="2" class="admin-training-plan-course admin-training-plan-sticky-col--course">{{ 'training_plan.course'|trans }}</th>
+                            <th rowspan="2" class="admin-training-plan-total admin-training-plan-sticky-col--total" title="{{ 'training_plan.year_percent'|trans }}" aria-label="{{ 'training_plan.year_percent'|trans }}">
+                                <svg class="bi bi-graph-up-arrow admin-training-plan-total-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                    <path fill-rule="evenodd" d="M0 0h1v15h15v1H0zm10 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4.9l-3.613 4.417a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61L13.445 4H10.5a.5.5 0 0 1-.5-.5"/>
+                                </svg>
+                                <span class="visually-hidden">{{ 'training_plan.year_percent'|trans }}</span>
+                            </th>
+                            {% for month in months %}
+                                <th colspan="3" class="admin-training-plan-month">{{ ('training_plan.month.' ~ month)|trans }}</th>
+                            {% endfor %}
+                        </tr>
+                        <tr class="admin-training-plan-head-row--sub">
+                            {% for month in months %}
+                                <th>{{ plan_helpers.header_icon('planned', 'training_plan.planned'|trans) }}</th>
+                                <th>{{ plan_helpers.header_icon('completed', 'training_plan.completed'|trans) }}</th>
+                                <th>{{ plan_helpers.header_icon('percent', 'training_plan.percent'|trans) }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                {% if row.is_department_first %}
+                                    <td class="admin-training-plan-sticky-left admin-training-plan-sticky-col--department admin-training-plan-department-group" rowspan="{{ row.department_rowspan }}">
+                                        <strong>{{ row.department.label() }}</strong>
+                                    </td>
+                                {% endif %}
+                                <td class="admin-training-plan-course admin-training-plan-sticky-col--course">
+                                    {{ row.course.label() }}
+                                </td>
+                                <td class="admin-training-plan-total admin-training-plan-sticky-col--total">
+                                    {{ plan_helpers.percent(row.percent_total) }}
+                                    <span class="admin-training-plan-muted">{{ row.completed_total }}/{{ row.planned_total }}</span>
+                                </td>
+                                {% for month in months %}
+                                    {% set cell = row.months[month] %}
+                                    <td class="admin-training-plan-planned-cell">{{ cell.planned }}</td>
+                                    <td class="admin-training-plan-done-cell">
+                                        {{ cell.completed }}
+                                    </td>
+                                    <td class="admin-training-plan-percent-cell">
+                                        {{ plan_helpers.percent(cell.percent) }}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="39">{{ 'training_plan.empty_courses'|trans }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+
+    {% if can_update %}
+        {% set form_department_id = selected_department ? selected_department.id : 0 %}
+        <div
+            class="modal fade admin-compact-modal admin-training-plan-modal"
+            id="trainingCoursePlanModal"
+            tabindex="-1"
+            aria-labelledby="trainingCoursePlanModalLabel"
+            aria-hidden="true"
+            data-training-plan-modal
+        >
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="post" action="{{ path('admin_training_course_plans_save') }}" class="admin-form">
+                        <input type="hidden" name="redirect_department_id" value="{{ selected_department ? selected_department.id : 0 }}">
+                        <input type="hidden" name="year" value="{{ year }}">
+
+                        <div class="modal-header">
+                            <div>
+                                <p class="app-kicker">{{ year }}</p>
+                                <h2 class="modal-title" id="trainingCoursePlanModalLabel">{{ 'training_plan.plan_modal_title'|trans }}</h2>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'common.close'|trans }}"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            {% if departments is empty %}
+                                <div class="alert alert-info mb-0" role="alert">{{ 'training_plan.empty_plan_setup'|trans }}</div>
+                            {% else %}
+                                <label class="admin-training-plan-modal-department">
+                                    <span>{{ 'training_plan.department'|trans }}</span>
+                                    <select class="form-select" name="department_id" required data-training-plan-department-select>
+                                        <option value="" {{ form_department_id == 0 ? 'selected' : '' }}>{{ 'training_plan.select_department'|trans }}</option>
+                                        {% for department in departments %}
+                                            <option value="{{ department.id }}" {{ department.id == form_department_id ? 'selected' : '' }}>{{ department.label() }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </label>
+
+                                {% for department in departments %}
+                                    {% set department_rows = rows|filter(row => row.department.id == department.id) %}
+                                    <div
+                                        class="admin-training-plan-modal-department-panel"
+                                        data-training-plan-department-panel="{{ department.id }}"
+                                        {{ department.id != form_department_id ? 'hidden' : '' }}
+                                    >
+                                        <label class="admin-training-plan-modal-course-select">
+                                            <span>{{ 'training_plan.course'|trans }}</span>
+                                            <select class="form-select" data-training-plan-course-select>
+                                                <option value="">{{ 'training_plan.select_course'|trans }}</option>
+                                                {% for course in department.trainingCourses %}
+                                                    <option value="{{ course.id }}">{{ course.label() }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </label>
+
+                                        {% for course in department.trainingCourses %}
+                                            {% set planned_row = department_rows|filter(row => row.course.id == course.id)|first %}
+                                            <section class="admin-training-plan-modal-course-card" data-training-plan-course-panel="{{ course.id }}" hidden>
+                                                <div class="admin-training-plan-modal-grid">
+                                                    {% for month in months %}
+                                                        {% set cell = planned_row ? planned_row.months[month] : { planned: 0 } %}
+                                                        <label class="admin-training-plan-modal-field">
+                                                            <span>{{ ('training_plan.month.' ~ month)|trans }}</span>
+                                                            <input
+                                                                class="form-control"
+                                                                type="number"
+                                                                min="0"
+                                                                step="1"
+                                                                name="plans[{{ department.id }}][{{ course.id }}][{{ month }}][planned]"
+                                                                value="{{ cell.planned }}"
+                                                                aria-label="{{ course.label() }} / {{ ('training_plan.month.' ~ month)|trans }} / {{ 'training_plan.planned'|trans }}"
+                                                            >
+                                                        </label>
+                                                    {% endfor %}
+                                                </div>
+                                            </section>
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button>
+                            {% if departments is not empty %}
+                                <button type="submit" class="btn btn-primary">{{ 'common.save'|trans }}</button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

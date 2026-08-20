@@ -1,0 +1,161 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block admin_title %}{{ 'competencies.matrix_title'|trans }}{% endblock %}
+{% block admin_heading %}{{ 'competencies.matrix_title'|trans }}{% endblock %}
+{% block admin_breadcrumbs %}
+    <a href="{{ path('admin_dashboard') }}">{{ 'admin.nav.dashboard'|trans }}</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ path('admin_competencies_index') }}">{{ 'admin.nav.competencies'|trans }}</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ 'competencies.matrix'|trans }}</span>
+{% endblock %}
+
+{% block admin_body %}
+    {% set show_department_groups = selected_factory_department_id == 0 and matrix_column_groups is not empty %}
+    {% set show_section_groups = selected_section_id == 0 and matrix_section_groups is not empty %}
+    {% set header_group_rows = (show_department_groups ? 1 : 0) + (show_section_groups ? 1 : 0) %}
+    <section class="module-panel module-panel--table">
+        <div class="module-panel__header admin-competency-matrix-header">
+            <div>
+                <p class="app-kicker">{{ 'competencies.kicker'|trans }}</p>
+                <h2>{{ 'competencies.matrix_title'|trans }}</h2>
+            </div>
+            <div class="admin-competency-matrix-toolbar">
+                <form class="admin-competency-matrix-filter" method="get" action="{{ path('admin_competencies_matrix') }}" data-auto-submit-form>
+                    <label>
+                        <span>{{ 'catalog.factory_department'|trans }}</span>
+                        <select class="form-select" name="factory_department_id" data-auto-submit-control>
+                            <option value="" {{ selected_factory_department_id == 0 ? 'selected' : '' }}>{{ 'competencies.all_departments'|trans }}</option>
+                            {% for department in factory_departments %}
+                                <option value="{{ department.id }}" {{ selected_factory_department_id == department.id ? 'selected' : '' }}>{{ department.label() }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <span>{{ 'competency.department'|trans }}</span>
+                        <select class="form-select" name="factory_section_id" data-auto-submit-control>
+                            <option value="" {{ selected_section_id == 0 ? 'selected' : '' }}>{{ 'competencies.all_sections'|trans }}</option>
+                            {% for section in filter_sections %}
+                                <option value="{{ section.id }}" {{ selected_section_id == section.id ? 'selected' : '' }}>
+                                    {{ selected_factory_department_id == 0 ? section.factoryDepartmentLabel() ~ ' / ' ~ section.label() : section.label() }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <span>{{ 'competency.function'|trans }}</span>
+                        <select class="form-select" name="factory_function_id" data-auto-submit-control>
+                            <option value="" {{ selected_function_id == 0 ? 'selected' : '' }}>{{ 'competencies.all_functions'|trans }}</option>
+                            {% for function_id, function_label in filter_functions %}
+                                <option value="{{ function_id }}" {{ selected_function_id == function_id ? 'selected' : '' }}>{{ function_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <span>{{ 'competencies.filter_competency_name'|trans }}</span>
+                        <input class="form-control admin-competency-matrix-filter__text" type="search" name="competency_name" value="{{ selected_competency_name }}" placeholder="{{ 'competencies.filter_competency_name_placeholder'|trans }}" data-competency-matrix-live-search>
+                    </label>
+                </form>
+                <a class="btn admin-secondary-button" href="{{ path('admin_competencies_index') }}">
+                    <svg class="admin-secondary-button__icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                        <path d="M6.8 3.2 2.2 8l4.6 4.8"/>
+                        <path d="M2.8 8h10.9"/>
+                    </svg>
+                    <span>{{ 'competencies.list_link'|trans }}</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="admin-competency-matrix-legend" aria-label="{{ 'competencies.matrix_legend'|trans }}">
+            <span class="admin-competency-matrix-legend__title">{{ 'competencies.matrix_legend'|trans }}</span>
+            <span class="admin-competency-matrix-legend__item">
+                <span class="admin-competency-matrix-legend__swatch admin-competency-matrix-legend__swatch--critical" aria-hidden="true">R</span>
+                {{ 'competencies.matrix_critical'|trans }}
+            </span>
+            <span class="admin-competency-matrix-legend__item">
+                <span class="admin-competency-matrix-legend__swatch admin-competency-matrix-legend__swatch--noncritical" aria-hidden="true">P</span>
+                {{ 'competencies.matrix_noncritical'|trans }}
+            </span>
+            <span class="admin-competency-matrix-legend__item">
+                <span class="admin-competency-matrix-legend__swatch admin-competency-matrix-legend__swatch--empty" aria-hidden="true">NR</span>
+                {{ 'competencies.matrix_unlinked'|trans }}
+            </span>
+        </div>
+
+        {% if matrix_columns is empty %}
+            <div class="admin-inline-alert alert alert-info" role="alert">{{ 'competencies.empty_matrix_columns'|trans }}</div>
+        {% endif %}
+
+        <div class="table-responsive admin-static-table admin-competency-matrix-wrapper">
+            <table class="table table-bordered admin-table admin-competency-matrix-table mb-0">
+                <thead>
+                    {% if show_department_groups %}
+                        <tr class="admin-competency-matrix-group-row">
+                            <th class="admin-competency-matrix-sticky-col admin-competency-matrix-competency-col" rowspan="{{ header_group_rows + 1 }}">{{ 'competency.name'|trans }}</th>
+                            {% for group in matrix_column_groups %}
+                                <th class="admin-competency-matrix-department-group" colspan="{{ group.colspan }}" style="--competency-matrix-department-color: {{ group.department_color|e('html_attr') }}">
+                                    <span>{{ group.factory_department }}</span>
+                                </th>
+                            {% endfor %}
+                        </tr>
+                    {% endif %}
+                    {% if show_section_groups %}
+                        <tr class="admin-competency-matrix-section-row{{ show_department_groups ? ' admin-competency-matrix-section-row--under-department' : '' }}">
+                            {% if not show_department_groups %}
+                                <th class="admin-competency-matrix-sticky-col admin-competency-matrix-competency-col" rowspan="2">{{ 'competency.name'|trans }}</th>
+                            {% endif %}
+                            {% for group in matrix_section_groups %}
+                                <th class="admin-competency-matrix-section-group{{ show_department_groups and group.department_group_start ? ' admin-competency-matrix-group-start' : '' }}" colspan="{{ group.colspan }}" style="--competency-matrix-department-color: {{ group.department_color|e('html_attr') }}">
+                                    <span>{{ group.section }}</span>
+                                </th>
+                            {% endfor %}
+                        </tr>
+                    {% endif %}
+                    <tr class="admin-competency-matrix-column-row{{ header_group_rows == 1 ? ' admin-competency-matrix-column-row--after-one-group' : (header_group_rows == 2 ? ' admin-competency-matrix-column-row--after-two-groups' : '') }}">
+                        {% if header_group_rows == 0 %}
+                            <th class="admin-competency-matrix-sticky-col admin-competency-matrix-competency-col">{{ 'competency.name'|trans }}</th>
+                        {% endif %}
+                        {% for column in matrix_columns %}
+                            <th class="admin-competency-matrix-function-col{{ show_section_groups and column.section_group_start ? ' admin-competency-matrix-section-start' : '' }}{{ show_department_groups and column.group_start ? ' admin-competency-matrix-group-start' : '' }}" style="--competency-matrix-department-color: {{ column.department_color|e('html_attr') }}">
+                                <span class="admin-competency-matrix-heading">
+                                    {% if not show_department_groups and selected_factory_department_id == 0 %}
+                                        <span>{{ column.factory_department }}</span>
+                                    {% endif %}
+                                    {% if not show_section_groups %}
+                                        <span>{{ column.section }}</span>
+                                    {% endif %}
+                                    <strong>{{ column.function }}</strong>
+                                </span>
+                            </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for competency in competencies %}
+                        {% set row_states = matrix_states[competency.id]|default({}) %}
+                        <tr>
+                            <th class="admin-competency-matrix-sticky-col admin-competency-matrix-competency-col" scope="row">
+                                <span>{{ competency.label() }}</span>
+                            </th>
+                            {% for column in matrix_columns %}
+                                {% set state = row_states[column.key]|default('empty') %}
+                                <td
+                                    class="admin-competency-matrix-cell admin-competency-matrix-cell--{{ state }}{{ show_section_groups and column.section_group_start ? ' admin-competency-matrix-section-start' : '' }}{{ show_department_groups and column.group_start ? ' admin-competency-matrix-group-start' : '' }}"
+                                    style="--competency-matrix-department-color: {{ column.department_color|e('html_attr') }}"
+                                    title="{{ state == 'critical' ? 'competencies.matrix_critical'|trans : (state == 'noncritical' ? 'competencies.matrix_noncritical'|trans : 'competencies.matrix_unlinked'|trans) }}"
+                                >
+                                    <span class="admin-competency-matrix-indicator admin-competency-matrix-indicator--{{ state }}" aria-hidden="true">{{ state == 'critical' ? 'R' : (state == 'noncritical' ? 'P' : 'NR') }}</span>
+                                    <span class="visually-hidden">{{ state == 'critical' ? 'competencies.matrix_critical'|trans : (state == 'noncritical' ? 'competencies.matrix_noncritical'|trans : 'competencies.matrix_unlinked'|trans) }}</span>
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="{{ matrix_columns|length + 1 }}">{{ 'competencies.empty_matrix'|trans }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

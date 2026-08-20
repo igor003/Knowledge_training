@@ -1,0 +1,238 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block admin_title %}{{ 'admin.nav.users'|trans }}{% endblock %}
+{% block admin_heading %}{{ 'admin.nav.users'|trans }}{% endblock %}
+{% block admin_breadcrumbs %}
+    <a href="{{ path('admin_dashboard') }}">{{ 'admin.nav.dashboard'|trans }}</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ 'admin.nav.users'|trans }}</span>
+{% endblock %}
+
+{% block admin_body %}
+    {% import 'admin/_icons.html.twig' as icons %}
+    {% set has_row_actions = can_update or can_deactivate %}
+    <section class="module-panel module-panel--table">
+        <div class="module-panel__header">
+            <div>
+                <p class="app-kicker">{{ 'users.access_control'|trans }}</p>
+                <h2>{{ 'users.system_users'|trans }}</h2>
+            </div>
+            {% if can_create %}
+                <button
+                    class="btn btn-primary admin-create-button"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createUserModal"
+                    aria-label="{{ 'users.create_user'|trans }}"
+                    title="{{ 'users.create_user'|trans }}"
+                >
+                    {{ icons.create() }}
+                    <span>{{ 'users.create'|trans }}</span>
+                </button>
+            {% endif %}
+        </div>
+
+        {% if action_error %}
+            <div class="admin-inline-alert alert alert-danger js-auto-dismiss-alert" role="alert">{{ action_error|trans }}</div>
+        {% endif %}
+
+        <div class="table-responsive">
+            <table class="table table-bordered admin-table js-data-table mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ 'user.name'|trans }}</th>
+                        <th>{{ 'user.email'|trans }}</th>
+                        <th>{{ 'user.role'|trans }}</th>
+                        <th>{{ 'user.status'|trans }}</th>
+                        <th>{{ 'user.last_login'|trans }}</th>
+                        {% if has_row_actions %}
+                            <th class="no-sort">{{ 'common.actions'|trans }}</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        {% set can_toggle_status = user.active ? can_deactivate : can_update %}
+                        <tr>
+                            <td>{{ user.name }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.roleLabel(app.request.locale) }}</td>
+                            <td>{{ (user.active ? 'user.active' : 'user.inactive')|trans }}</td>
+                            <td>{{ user.lastLoginAt ? user.lastLoginAt|date('Y-m-d H:i') : '-' }}</td>
+                            {% if has_row_actions %}
+                                <td>
+                                    <div class="admin-row-actions">
+                                        {% if can_update %}
+                                            <button
+                                                class="btn admin-row-action admin-row-action--edit"
+                                                type="button"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editUserModal{{ user.id }}"
+                                                aria-label="{{ 'common.update'|trans }}"
+                                                title="{{ 'common.update'|trans }}"
+                                            >
+                                                {{ icons.edit() }}
+                                            </button>
+                                        {% endif %}
+
+                                        {% if can_toggle_status %}
+                                            <form
+                                                method="post"
+                                                action="{{ path('admin_users_toggle_status', { id: user.id }) }}"
+                                                onsubmit="return confirm('{{ (user.active ? 'users.confirm_disable' : 'users.confirm_activate')|trans|e('html_attr') }}')"
+                                            >
+                                                <button
+                                                    class="btn admin-row-action {{ user.active ? 'admin-row-action--active' : 'admin-row-action--inactive' }}"
+                                                    type="submit"
+                                                    aria-label="{{ (user.active ? 'common.disable' : 'common.activate')|trans }}"
+                                                    title="{{ (user.active ? 'common.disable' : 'common.activate')|trans }}"
+                                                    {{ current_user and current_user.id == user.id ? 'disabled' : '' }}
+                                                >
+                                                    {% if user.active %}
+                                                        {{ icons.activate() }}
+                                                    {% else %}
+                                                        {{ icons.disable() }}
+                                                    {% endif %}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {% if can_update %}
+        {% for user in users %}
+        {% set is_edit_modal_open = open_edit_user_id == user.id %}
+        {% set form_name = is_edit_modal_open ? edit_form.name : user.name %}
+        {% set form_email = is_edit_modal_open ? edit_form.email : user.email %}
+        {% set form_role_id = is_edit_modal_open ? edit_form.role_id : user.role_id %}
+        {% set form_active = is_edit_modal_open ? edit_form.active : user.active %}
+        <div
+            class="modal fade admin-compact-modal"
+            id="editUserModal{{ user.id }}"
+            tabindex="-1"
+            aria-labelledby="editUserModalLabel{{ user.id }}"
+            aria-hidden="true"
+            data-open-modal="{{ is_edit_modal_open ? 'true' : 'false' }}"
+        >
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="post" action="{{ path('admin_users_update', { id: user.id }) }}" class="admin-form">
+                        <div class="modal-header">
+                            <div>
+                                <p class="app-kicker">{{ 'users.access_control'|trans }}</p>
+                                <h2 class="modal-title" id="editUserModalLabel{{ user.id }}">{{ 'users.update_user'|trans }}</h2>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'common.close'|trans }}"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            {% if is_edit_modal_open and edit_error %}
+                                <div class="alert alert-danger js-auto-dismiss-alert" role="alert">{{ edit_error|trans }}</div>
+                            {% endif %}
+
+                            <label>
+                                {{ 'user.name'|trans }}
+                                <input class="form-control" name="name" type="text" autocomplete="name" value="{{ form_name }}" required>
+                            </label>
+
+                            <label>
+                                {{ 'user.email'|trans }}
+                                <input class="form-control" name="email" type="email" autocomplete="email" value="{{ form_email }}" required>
+                            </label>
+
+                            <label>
+                                {{ 'user.role'|trans }}
+                                <select class="form-select" name="role_id" required>
+                                    {% for role in roles %}
+                                        <option value="{{ role.id }}" {{ form_role_id == role.id ? 'selected' : '' }}>{{ role.label(app.request.locale) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+
+                            <label>
+                                {{ 'user.status'|trans }}
+                                <select class="form-select" name="active" required>
+                                    <option value="1" {{ form_active ? 'selected' : '' }}>{{ 'user.active'|trans }}</option>
+                                    <option value="0" {{ not form_active ? 'selected' : '' }}>{{ 'user.inactive'|trans }}</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button>
+                            <button class="btn btn-primary" type="submit">{{ 'common.save'|trans }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if can_create %}
+        <div
+            class="modal fade admin-compact-modal"
+            id="createUserModal"
+            tabindex="-1"
+            aria-labelledby="createUserModalLabel"
+            aria-hidden="true"
+            data-open-modal="{{ open_create_modal ? 'true' : 'false' }}"
+        >
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="post" action="{{ path('admin_users_create') }}" class="admin-form">
+                        <div class="modal-header">
+                            <div>
+                                <p class="app-kicker">{{ 'users.access_control'|trans }}</p>
+                                <h2 class="modal-title" id="createUserModalLabel">{{ 'users.new_system_user'|trans }}</h2>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'common.close'|trans }}"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            {% if create_error %}
+                                <div class="alert alert-danger js-auto-dismiss-alert" role="alert">{{ create_error|trans }}</div>
+                            {% endif %}
+
+                            <label>
+                                {{ 'user.name'|trans }}
+                                <input class="form-control" name="name" type="text" autocomplete="name" value="{{ create_form.name }}" required>
+                            </label>
+
+                            <label>
+                                {{ 'user.email'|trans }}
+                                <input class="form-control" name="email" type="email" autocomplete="email" value="{{ create_form.email }}" required>
+                            </label>
+
+                            <label>
+                                {{ 'user.role'|trans }}
+                                <select class="form-select" name="role_id" required>
+                                    {% for role in roles %}
+                                        <option value="{{ role.id }}" {{ create_form.role_id == role.id ? 'selected' : '' }}>{{ role.label(app.request.locale) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+
+                            <label>
+                                {{ 'user.password'|trans }}
+                                <input class="form-control" name="password" type="password" autocomplete="new-password" minlength="4" required>
+                            </label>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button>
+                            <button class="btn btn-primary" type="submit">{{ 'users.create_user'|trans }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

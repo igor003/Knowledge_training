@@ -1,0 +1,20 @@
+<label>
+    {{ 'role.name'|trans }}
+    <input class="form-control" name="name" type="text" value="{{ form_name }}" required>
+</label>
+
+<input type="hidden" name="is_admin" value="0">
+<label class="admin-check-field">
+    <input class="form-check-input" name="is_admin" type="checkbox" value="1" {{ form_is_admin ? 'checked' : '' }}>
+    <span>{{ 'role.admin_access'|trans }}</span>
+</label>
+
+{% if include_active %}
+    <label>
+        {{ 'role.status'|trans }}
+        <select class="form-select" name="active" required>
+            <option value="1" {{ form_active ? 'selected' : '' }}>{{ 'role.active'|trans }}</option>
+            <option value="0" {{ not form_active ? 'selected' : '' }}>{{ 'role.inactive'|trans }}</option>
+        </select>
+    </label>
+{% endif %}

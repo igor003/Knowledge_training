@@ -1,0 +1,97 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block admin_title %}{{ 'admin.nav.permissions'|trans }}{% endblock %}
+{% block admin_heading %}{{ 'admin.nav.permissions'|trans }}{% endblock %}
+{% block admin_breadcrumbs %}
+    <a href="{{ path('admin_dashboard') }}">{{ 'admin.nav.dashboard'|trans }}</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ 'admin.nav.permissions'|trans }}</span>
+{% endblock %}
+
+{% block admin_body %}
+    <section class="module-panel module-panel--table">
+        <form method="post" action="{{ path('admin_permissions_update') }}">
+            <div class="module-panel__header">
+                <div>
+                    <p class="app-kicker">{{ 'permissions.access_control'|trans }}</p>
+                    <h2>{{ 'permissions.matrix'|trans }}</h2>
+                </div>
+                {% if can_update %}
+                    <button class="btn admin-save-button" type="submit">
+                        <svg class="admin-save-button__icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                            <path d="M11 2H9v3h2z"/>
+                            <path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z"/>
+                        </svg>
+                        <span>{{ 'common.save'|trans }}</span>
+                    </button>
+                {% endif %}
+            </div>
+
+            {% if action_error %}
+                <div class="admin-inline-alert alert alert-danger js-auto-dismiss-alert" role="alert">{{ action_error|trans }}</div>
+            {% endif %}
+
+            <div class="table-responsive admin-static-table">
+                <table class="table table-bordered admin-table admin-permission-table mb-0">
+                    <thead>
+                        <tr>
+                            <th class="admin-permission-entity-heading">{{ 'permission.entity'|trans }}</th>
+                            <th class="admin-permission-action-cell">{{ 'permission.action_label'|trans }}</th>
+                            {% for role in roles %}
+                                <th class="admin-permission-role-heading">{{ role.label(app.request.locale) }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entity in entities %}
+                            {% for action in actions %}
+                                    {% set action_available = action_availability[entity.id][action] ?? true %}
+                                    <tr class="{{ loop.first ? 'admin-permission-group-start' : '' }} {{ not action_available ? 'admin-permission-row--unavailable' : '' }}">
+                                        {% if loop.first %}
+                                        <td class="admin-permission-entity-cell" rowspan="{{ actions|length }}">
+                                            <strong>{{ entity.label(app.request.locale) }}</strong>
+                                            {% if entity.is_system %}<span class="admin-permission-system-badge">{{ 'permission.system'|trans }}</span>{% endif %}
+                                        </td>
+                                    {% endif %}
+                                    {% set field = 'can_' ~ action %}
+                                    <td class="admin-permission-action-cell">
+                                        <span class="admin-permission-action">
+                                            <span class="admin-permission-action__icon admin-permission-action__icon--{{ action }}" aria-hidden="true"></span>
+                                            <span>{{ ('permission.action_full.' ~ action)|trans }}</span>
+                                        </span>
+                                    </td>
+                                    {% for role in roles %}
+                                        {% set permission = matrix[role.id][entity.id] ?? null %}
+                                        <td class="admin-permission-cell">
+                                            {% if action_available %}
+                                                <label
+                                                    class="admin-permission-toggle"
+                                                    title="{{ role.label(app.request.locale) }} / {{ entity.label(app.request.locale) }} / {{ ('permission.action_full.' ~ action)|trans }}"
+                                                >
+                                                    <input
+                                                        class="form-check-input"
+                                                        type="checkbox"
+                                                        name="permissions[{{ role.id }}][{{ entity.id }}][{{ action }}]"
+                                                        value="1"
+                                                        {{ permission and attribute(permission, field) ? 'checked' : '' }}
+                                                        {{ not can_update ? 'disabled' : '' }}
+                                                    >
+                                                </label>
+                                            {% else %}
+                                                <span
+                                                    class="admin-permission-unavailable"
+                                                    title="{{ 'permission.not_available'|trans }}"
+                                                    aria-label="{{ 'permission.not_available'|trans }}"
+                                                >-</span>
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </section>
+{% endblock %}

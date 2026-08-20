@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'auth.login.title'|trans }} | Knowledge Training{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="/build/assets/app.css">
+{% endblock %}
+
+{% block javascripts %}
+    <script type="module" src="/build/assets/app.js"></script>
+{% endblock %}
+
+{% block body %}
+    <main class="auth-page">
+        <section class="auth-card">
+            <div class="auth-card__top">
+                <p class="app-kicker">{{ 'admin.title'|trans }}</p>
+                <div class="admin-language-switcher" aria-label="{{ 'admin.language.aria'|trans }}">
+                    {% for locale in ['ru', 'ro', 'it', 'fr'] %}
+                        <a
+                            href="{{ path('admin_language_switch', { locale: locale }) }}"
+                            class="{{ app.request.locale == locale ? 'admin-language-switcher__item--active' : '' }}"
+                            {% if app.request.locale == locale %}aria-current="true"{% endif %}
+                        >
+                            {{ locale|upper }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+            <h1>{{ 'auth.login.heading'|trans }}</h1>
+
+            {% if error %}
+                <div class="alert alert-danger js-auto-dismiss-alert" role="alert">{{ error|trans }}</div>
+            {% endif %}
+
+            <form method="post" class="auth-form">
+                <label>
+                    {{ 'user.name'|trans }}
+                    <input class="form-control" name="name" type="text" autocomplete="username" required>
+                </label>
+
+                <label>
+                    {{ 'user.password'|trans }}
+                    <input class="form-control" name="password" type="password" autocomplete="current-password" required>
+                </label>
+
+                <button class="btn btn-primary w-100" type="submit">{{ 'auth.login.submit'|trans }}</button>
+            </form>
+        </section>
+    </main>
+{% endblock %}
